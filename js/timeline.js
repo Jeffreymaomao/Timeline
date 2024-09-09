@@ -6,9 +6,12 @@ import {
 class Timeline {
     constructor(config) {
         this.resolution = 2;
+        this.fontSize = 13;
         this.ctx = null;
         this.mousePosition = null;
+        this.mouseDate = null;
 
+        this.axisHeight = 0.2; // ratio (0 ~ 1)
         this.pixelsPerMillisecond = null;
         this.incrementMilliseconds = null;
         this.deltaPixel = null
@@ -31,6 +34,24 @@ class Timeline {
             min: 1000, // 1 second in ms
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
+
+        this.color = {
+            mouse: 'rgba(0,0,200,0.8)',
+            now: 'rgba(200,0,0,0.8)',
+            label: '#222',
+            mainAxis: '#333',
+            subAxis: '#333',
+            grid: '#bbb'
+        };
+
+        this.lineWidth = {
+            mouse: 0.8,
+            now: 0.8,
+            mainAxis: 1.5,
+            subAxis: 0.9,
+            grid: 1.0
+        };
+
         // this.range.start.date.setSeconds(this.range.start.date.getSeconds() - 1);
         // this.range.end.date.setSeconds(this.range.end.date.getSeconds() + 1);
 
@@ -40,11 +61,14 @@ class Timeline {
         // this.range.start.date.setMinutes(this.range.start.date.getMinutes() - 20);
         // this.range.end.date.setMinutes(this.range.end.date.getMinutes() + 20);
 
-        this.range.start.date.setHours(this.range.start.date.getHours() - 12);
-        this.range.end.date.setHours(this.range.end.date.getHours() + 12);
+        this.range.start.date.setHours(this.range.start.date.getHours() - 10);
+        this.range.end.date.setHours(this.range.end.date.getHours() + 10);
 
         this.calculateGridInformation();
         this.initializeDOM(config.parentDOM || document.body);
+        
+        this.loop();
+        // window.setInterval(function(){window.requestAnimationFrame(this.draw.bind(this))}.bind(this), 500);
     }
 
     initializeDOM(parentDOM) {
@@ -60,7 +84,8 @@ class Timeline {
         this.calculateGridInformation();
         this.bindEvents();
         // ---
-        this.draw();
+        // this.draw();
+        window.requestAnimationFrame(this.draw.bind(this));
     }
 
     resizeCanvas() {
@@ -76,14 +101,193 @@ class Timeline {
     drawMouseGrid() {
         if (!this.mousePosition) return;
         const { x, y } = this.mousePosition;
+        const fontSize = this.fontSize * this.resolution;
 
-        this.ctx.strokeStyle = '#0000ff';
-        this.ctx.lineWidth = 2;
+        this.mouseDate = new Date(this.range.start.time + x/this.pixelsPerMillisecond);
+        const timeLabel = formatDate(this.mouseDate, "yyyy/MM/dd (ddd) hhtt mm\\m ss\\s", false);
 
+        this.ctx.fillStyle = this.color.mouse;
+        this.ctx.font = `${fontSize}px Arial`;
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(timeLabel, x+12, fontSize);
+
+        this.ctx.strokeStyle = this.color.mouse;
+        this.ctx.lineWidth = this.lineWidth.mouse * this.resolution;
         this.ctx.beginPath();
         this.ctx.moveTo(x, 0);
         this.ctx.lineTo(x, this.dom.grid.height);
         this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+    drawGrid() {
+        const gridWidth = this.dom.grid.width;
+        const gridHeight = this.dom.grid.height;
+        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
+        const deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
+        const axisY = gridHeight * (1.0 - this.axisHeight);
+
+        this.ctx.strokeStyle = this.color.grid;
+        this.ctx.lineWidth = this.lineWidth.grid * this.resolution;
+        
+        let num = 0; const max_num = gridWidth*this.resolution;
+        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
+            if(num>max_num) return;
+            // vertical grid
+        	this.ctx.beginPath();
+        	this.ctx.moveTo(x, 0);
+        	this.ctx.lineTo(x, gridHeight);
+        	this.ctx.stroke();
+            this.ctx.closePath();
+            num ++;
+        }
+
+        this.ctx.strokeStyle = this.color.subAxis;
+        this.ctx.lineWidth = this.lineWidth.subAxis * this.resolution;
+        num=0;
+        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
+            if(num>max_num) return;
+            // aub-vertical grid on axis
+            this.ctx.beginPath();
+            this.ctx.moveTo(x+deltaPixel*0.5, axisY-10);
+            this.ctx.lineTo(x+deltaPixel*0.5, axisY+10);
+            this.ctx.stroke();
+            this.ctx.closePath();
+            num++;
+        }
+
+        // main axis line
+        this.ctx.strokeStyle = this.color.mainAxis;
+        this.ctx.lineWidth = this.lineWidth.mainAxis * this.resolution;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, axisY);
+        this.ctx.lineTo(gridWidth, axisY);
+        this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+    drawNow() {
+        const nowDate = new Date();
+        const nowTime = nowDate.getTime();
+        if(nowTime < this.range.start.time || this.range.end.time < nowTime) return;
+
+        const gridHeight = this.dom.grid.height;
+        const nowPositionX = (nowTime - this.range.start.time) * this.pixelsPerMillisecond;
+        const axisY = gridHeight * (1.0 - this.axisHeight);
+        const radius = 5.0 * this.resolution;
+
+        this.ctx.fillStyle = this.color.now;
+        this.ctx.strokeStyle = this.color.now;
+        this.ctx.beginPath();
+        this.ctx.arc(nowPositionX, axisY, radius, 0, 6.283185307179586);
+        this.ctx.fill();
+        this.ctx.closePath();
+
+        this.ctx.lineWidth = this.lineWidth.now * this.resolution;
+        this.ctx.beginPath();
+        this.ctx.moveTo(nowPositionX, 0);
+        this.ctx.lineTo(nowPositionX, gridHeight);
+        this.ctx.stroke();
+        this.ctx.closePath();
+
+
+        const fontSize = this.fontSize * this.resolution;
+        const timeLabel = formatDate(nowDate, "yyyy/MM/dd (ddd) hhtt mm\\m ss\\s", false);
+        this.ctx.font = `${fontSize}px Arial`;
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(timeLabel, nowPositionX+12, fontSize);
+    }
+
+    drawLabel() {
+        const gridWidth = this.dom.grid.width;
+        const gridHeight = this.dom.grid.height;
+
+        this.ctx.fillStyle = this.color.label;
+        this.ctx.font = `${this.fontSize*this.resolution}px Arial`;
+        this.ctx.textAlign = 'center';
+
+        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
+        let deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
+
+        let currentDate = new Date(this.plotStartTime);
+        let num = 0; const max_num = 100;
+        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
+            if(num>max_num) return;
+            const timeLabel = formatDate(currentDate, this.formatString, false);
+            this.ctx.fillText(timeLabel, x, gridHeight * (1.0 - this.axisHeight) - 10); // 10 px if offset of label
+            currentDate = new Date(currentDate.getTime() + this.incrementMilliseconds);
+            num++;
+        }
+    }
+
+    draw() {
+        this.calculateGridInformation();
+
+        // draw
+        this.ctx.clearRect(0, 0, this.dom.grid.width, this.dom.grid.height);
+        this.drawGrid();
+        this.drawLabel();
+        this.drawNow()
+        this.drawMouseGrid();
+    }
+
+    loop() {
+        window.requestAnimationFrame(this.draw.bind(this));
+        window.requestAnimationFrame(this.loop.bind(this));
+    }
+
+    bindEvents() {
+        const grid = this.dom.grid;
+
+        window.addEventListener("resize", function(e) {
+            this.resizeCanvas();
+            // this.draw();
+            window.requestAnimationFrame(this.draw.bind(this));
+        }.bind(this), false);
+
+        grid.addEventListener('mousemove', function(e) {
+            const rect = grid.getBoundingClientRect();
+            this.mousePosition = {
+                x: (e.clientX - rect.left) * this.resolution,
+                y: (e.clientY - rect.top) * this.resolution
+            };
+            requestAnimationFrame(this.draw.bind(this));
+        }.bind(this), false);
+
+        grid.addEventListener('mouseout', function(e) {
+            this.mousePosition = null;
+            requestAnimationFrame(this.draw.bind(this));
+        }.bind(this), false);
+
+        grid.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            const startTime = this.range.start.time;
+            const endTime = this.range.end.time;
+            const minDuration = this.range.min;
+            const maxDuration = this.range.max;
+            const mouseTime = this.mouseDate.getTime();
+            const mouseLeftRatio = (mouseTime - startTime) / this.range.duration * 2.0;
+            const mouseRightRatio = (endTime - mouseTime) / this.range.duration * 2.0;
+
+            let deltaY = e.deltaY * this.scaleRatio * this._scaleRatioY;
+            let newStartDate = new Date(startTime - deltaY * mouseLeftRatio);
+            let newEndDate = new Date(endTime + deltaY * mouseRightRatio);
+
+            if(e.deltaY<0 && startTime + minDuration > endTime){
+                return;
+            } else if(e.deltaY>0 && endTime - startTime > maxDuration){
+                return;
+            } else if(e.deltaX) {
+                const deltaX = e.deltaX * this.scaleRatio * this._scaleRatioX;
+                newStartDate = new Date(startTime + deltaX);
+                newEndDate = new Date(endTime + deltaX);
+            }
+
+            this.range.start.date = newStartDate;
+            this.range.end.date = newEndDate;
+            // this.draw();
+            window.requestAnimationFrame(this.draw.bind(this));
+        }.bind(this), { passive: false });
     }
 
     calculateGridInformation() {
@@ -281,124 +485,6 @@ class Timeline {
                 break;
         }
         this.plotStartTime = plotStartDate.getTime();
-    }
-
-    drawGrid() {
-        const gridWidth = this.dom.grid.width;
-        const gridHeight = this.dom.grid.width;
-        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
-        const deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
-
-        this.ctx.strokeStyle = '#999';
-        this.ctx.lineWidth = 1;
-        
-        let num = 0; const max_num = gridWidth*this.resolution;
-        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
-            if(num>max_num) return;
-        	this.ctx.beginPath();
-        	this.ctx.moveTo(x, 0);
-        	this.ctx.lineTo(x, gridHeight);
-        	this.ctx.stroke();
-            num ++;
-        }
-    }
-
-    drawLabel() {
-        const gridWidth = this.dom.grid.width;
-        const gridHeight = this.dom.grid.height;
-
-        const bottom = 200;
-        const fontSize = 15;
-        this.ctx.fillStyle = '#000';
-        this.ctx.font = `${fontSize*this.resolution}px Arial`;
-        this.ctx.textAlign = 'center';
-
-        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
-        let deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
-
-        let currentDate = new Date(this.plotStartTime);
-        let num = 0; const max_num = 100;
-        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
-            if(num>max_num) return;
-            const timeLabel = formatDate(currentDate, this.formatString, false);
-            this.ctx.fillText(timeLabel, x, gridHeight - bottom);
-            currentDate = new Date(currentDate.getTime() + this.incrementMilliseconds);
-            num++;
-        }
-    }
-
-    checkRange() {
-        const startTime = this.range.start.time;
-        const endTime = this.range.end.time;
-        const minDuration = this.range.min;
-
-        // if(startTime + minDuration > endTime){
-        //     const midTime = (startTime + endTime) * 0.5;
-        //     this.range.start.date = new Date(midTime - minDuration*0.5);
-        //     this.range.end.date = new Date(midTime + minDuration*0.5);
-        //     console.log("not good in checkRange");
-        //     return;
-        // }
-    }
-
-    draw() {
-        this.checkRange();
-        this.calculateGridInformation();
-
-        // draw
-        this.ctx.clearRect(0, 0, this.dom.grid.width, this.dom.grid.height);
-        this.drawGrid();
-        this.drawLabel();
-        this.drawMouseGrid();
-    }
-
-    bindEvents() {
-        const grid = this.dom.grid;
-
-        window.addEventListener("resize", function(e) {
-            this.resizeCanvas();
-            this.draw();
-        }.bind(this), false);
-
-        grid.addEventListener('mousemove', function(e) {
-            const rect = grid.getBoundingClientRect();
-            this.mousePosition = {
-                x: (e.clientX - rect.left) * this.resolution,
-                y: (e.clientY - rect.top) * this.resolution
-            };
-            requestAnimationFrame(this.draw.bind(this));
-        }.bind(this), false);
-
-        grid.addEventListener('mouseout', function(e) {
-            this.mousePosition = null;
-            requestAnimationFrame(this.draw.bind(this));
-        }.bind(this), false);
-
-        grid.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            const startTime = this.range.start.time;
-            const endTime = this.range.end.time;
-            const minDuration = this.range.min;
-            const maxDuration = this.range.max;
-
-            let deltaY = e.deltaY * this.scaleRatio * this._scaleRatioY;
-            let newStartDate = new Date(startTime - deltaY);
-            let newEndDate = new Date(endTime + deltaY);
-
-            if(e.deltaY<0 && startTime + minDuration > endTime){
-                return;
-            } else if(e.deltaY>0 && endTime - startTime > maxDuration){
-                return;
-            } else if(e.deltaX) {
-                const deltaX = e.deltaX * this.scaleRatio * this._scaleRatioX;
-                newStartDate = new Date(startTime + deltaX);
-                newEndDate = new Date(endTime + deltaX);
-            }
-
-            this.range.start.date = newStartDate;
-            this.range.end.date = newEndDate;
-            this.draw();
-        }.bind(this), { passive: false });
     }
 }
 
