@@ -8,6 +8,11 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    background-color: #fff;
+}
+
+body.dark {
+    background-color: #222;
 }
 
 .top-bar {
@@ -35,4 +40,6 @@ body {
     height: calc(100% - 40px);
     border-radius: 10px;
     box-shadow: 0 0 5px #ccc;
+    z-index: 10;
+    overflow: hidden;
 }

@@ -10,6 +10,7 @@ class Timeline {
         this.ctx = null;
         this.mousePosition = null;
         this.mouseDate = null;
+        this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
         this.axisHeight = 0.2; // ratio (0 ~ 1)
         this.pixelsPerMillisecond = null;
@@ -35,7 +36,8 @@ class Timeline {
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
 
-        this.color = {
+        this.colorWhite = {
+            background: 'rgba(255,255,255,1.0)',
             mouse: 'rgba(0,0,200,0.8)',
             now: 'rgba(200,0,0,0.8)',
             label: '#222',
@@ -44,12 +46,30 @@ class Timeline {
             grid: '#bbb'
         };
 
+        this.colorDark = {
+            background: 'rgba(0,0,0,1.0)',
+            mouse: 'rgba(100,200,255,0.9)',
+            now: 'rgba(250,30,100,0.9)',
+            label: '#fff',
+            mainAxis: '#eee',
+            subAxis: '#eee',
+            grid: '#999'
+        };
+
+        this.color = this.colorWhite;
+        if(this.isDarkMode) this.color = this.colorDark;
+
         this.lineWidth = {
             mouse: 0.8,
             now: 0.8,
             mainAxis: 1.5,
             subAxis: 0.9,
             grid: 1.0
+        };
+
+        this.radius = {
+            now: 5,
+            mouse: 5
         };
 
         // this.range.start.date.setSeconds(this.range.start.date.getSeconds() - 1);
@@ -75,6 +95,19 @@ class Timeline {
         this.dom = { parentDOM };
         this.dom.grid = createAndAppendDOM(this.dom.parentDOM, "canvas.grid");
         this.initializeGrid();
+
+        const changeToDarkLightMode = ()=>{
+            this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if(this.isDarkMode){
+                this.color = this.colorDark;
+            } else{
+                console.log(this.colorWhite);
+                this.color = this.colorWhite;
+            }
+            window.requestAnimationFrame(this.draw.bind(this));
+        };
+        if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', changeToDarkLightMode.bind(this), false);
+        if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', changeToDarkLightMode.bind(this), false);
     }
 
     initializeGrid() {
@@ -101,6 +134,7 @@ class Timeline {
     drawMouseGrid() {
         if (!this.mousePosition) return;
         const { x, y } = this.mousePosition;
+        const gridHeight = this.dom.grid.height;
         const fontSize = this.fontSize * this.resolution;
 
         this.mouseDate = new Date(this.range.start.time + x/this.pixelsPerMillisecond);
@@ -115,8 +149,16 @@ class Timeline {
         this.ctx.lineWidth = this.lineWidth.mouse * this.resolution;
         this.ctx.beginPath();
         this.ctx.moveTo(x, 0);
-        this.ctx.lineTo(x, this.dom.grid.height);
+        this.ctx.lineTo(x, gridHeight);
         this.ctx.stroke();
+        this.ctx.closePath();
+
+        const axisY = gridHeight * (1.0 - this.axisHeight);
+        const radius = this.radius.mouse * this.resolution;
+        this.ctx.fillStyle = this.color.mouse;
+        this.ctx.beginPath();
+        this.ctx.arc(x, axisY, radius, 0, 6.283185307179586);
+        this.ctx.fill();
         this.ctx.closePath();
     }
 
@@ -174,7 +216,7 @@ class Timeline {
         const gridHeight = this.dom.grid.height;
         const nowPositionX = (nowTime - this.range.start.time) * this.pixelsPerMillisecond;
         const axisY = gridHeight * (1.0 - this.axisHeight);
-        const radius = 5.0 * this.resolution;
+        const radius = this.radius.now * this.resolution;
 
         this.ctx.fillStyle = this.color.now;
         this.ctx.strokeStyle = this.color.now;
@@ -223,8 +265,12 @@ class Timeline {
     draw() {
         this.calculateGridInformation();
 
-        // draw
+        // draw background
         this.ctx.clearRect(0, 0, this.dom.grid.width, this.dom.grid.height);
+        this.ctx.rect(0, 0, this.dom.grid.width, this.dom.grid.height);
+        this.ctx.fillStyle = this.color.background;
+        this.ctx.fill();
+        // draw other
         this.drawGrid();
         this.drawLabel();
         this.drawNow()
@@ -265,6 +311,7 @@ class Timeline {
             const endTime = this.range.end.time;
             const minDuration = this.range.min;
             const maxDuration = this.range.max;
+            if(!this.mouseDate) return;
             const mouseTime = this.mouseDate.getTime();
             const mouseLeftRatio = (mouseTime - startTime) / this.range.duration * 2.0;
             const mouseRightRatio = (endTime - mouseTime) / this.range.duration * 2.0;
