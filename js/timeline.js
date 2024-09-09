@@ -8,10 +8,42 @@ class Timeline {
         this.resolution = 2;
         this.ctx = null;
         this.mousePosition = null;
-        this.range = { start: new Date(), end: new Date(), center: new Date() };
-        this.range.start.setHours(this.range.start.getHours() - 6);
-        this.range.end.setHours(this.range.end.getHours() + 6);
 
+        this.pixelsPerMillisecond = null;
+        this.incrementMilliseconds = null;
+        this.deltaPixel = null;
+        this.plotStartTime = null;
+        this.formatString = null;
+
+        this.range = {
+            start: {
+                date: new Date(),
+                time: null
+            },
+            end: {
+                date: new Date(),
+                time: null
+            },
+            duration: null,
+            min: 1000, // ms
+            max: Infinity // ms 
+        };
+        // this.range.start.date.setSeconds(this.range.start.date.getSeconds() - 5);
+        // this.range.end.date.setSeconds(this.range.end.date.getSeconds() + 5);
+
+        // this.range.start.date.setMinutes(this.range.start.date.getMinutes() - 5);
+        // this.range.end.date.setMinutes(this.range.end.date.getMinutes() + 5);
+
+        // this.range.start.date.setMinutes(this.range.start.date.getMinutes() - 20);
+        // this.range.end.date.setMinutes(this.range.end.date.getMinutes() + 20);
+
+        // this.range.start.date.setHours(this.range.start.date.getHours() - 24);
+        // this.range.end.date.setHours(this.range.end.date.getHours() + 24);
+
+        this.range.start.date.setDate(this.range.start.date.getDate() - 30*10);
+        this.range.end.date.setDate(this.range.end.date.getDate() + 30*10);
+
+        this.calculateGridInformation();
         this.initializeDOM(config.parentDOM || document.body);
     }
 
@@ -25,6 +57,7 @@ class Timeline {
         const grid = this.dom.grid;
         this.ctx = grid.getContext('2d');
         this.resizeCanvas();
+        this.calculateGridInformation();
         this.bindEvents();
         // ---
         this.draw();
@@ -53,116 +86,253 @@ class Timeline {
         this.ctx.stroke();
     }
 
+    calculateGridInformation() {
+        this.range.start.time = this.range.start.date.getTime();
+        this.range.end.time = this.range.end.date.getTime();
+        this.range.duration = this.range.end.time - this.range.start.time;
+
+        const grdiWidthPixels = this.dom ? this.dom.grid.width : 100;
+        this.pixelsPerMillisecond =  grdiWidthPixels / this.range.duration;
+
+        let plotStartDate = new Date(this.range.start.time);
+
+        this.range.min = 1000 * 60;
+        switch (true) {
+            // ---
+            case (this.range.duration <= 1000 * 1): // 小於等於 1 秒
+                this.incrementMilliseconds = 50; // 間隔 100 毫秒
+                this.formatString = ":ss.fff";
+                // this.formatString = "";
+                plotStartDate.setMilliseconds(0);
+                break;
+            case (this.range.duration <= 1000 * 5): // 小於等於 5 秒
+                this.incrementMilliseconds = 200; // 間隔 200 毫秒
+                this.formatString = ":ss.fff";
+                // this.formatString = "";
+                plotStartDate.setMilliseconds(0);
+                break;
+            case (this.range.duration <= 1000 * 10): // 小於等於 10 秒
+                this.incrementMilliseconds = 500; // 間隔 500 毫秒
+                this.formatString = ":ss.fff";
+                // this.formatString = "";
+                plotStartDate.setMilliseconds(0);
+                break;
+            case (this.range.duration <= 1000 * 30): // 小於等於 30 秒
+                this.incrementMilliseconds = 1000; // 間隔 1 秒
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setMilliseconds(0);
+                break;
+            // ---
+            case (this.range.duration <= 1000 * 60 * 2): // 小於等於 2 分鐘
+                this.incrementMilliseconds = 1000 * 5; // 間隔 5 秒
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setSeconds(0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 5): // 小於等於 5 分鐘
+                this.incrementMilliseconds = 1000 * 10; // 間隔 10 秒
+                this.formatString = "mm:ss";
+                plotStartDate.setSeconds(0, 0);
+                // this.formatString = "";
+                break;
+            case (this.range.duration <= 1000 * 60 * 10): // 小於等於 10 分鐘
+                this.incrementMilliseconds = 1000 * 20; // 間隔 15 秒
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setSeconds(0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 15): // 小於等於 15 分鐘
+                this.incrementMilliseconds = 1000 * 30; // 間隔 30 秒
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setSeconds(0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 20): // 小於等於 20 分鐘
+                this.incrementMilliseconds = 1000 * 60; // 間隔 1 分鐘
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setSeconds(0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 30): // 小於等於 30 分鐘
+                this.incrementMilliseconds = 1000 * 60; // 間隔 2 分鐘
+                this.formatString = "mm:ss";
+                // this.formatString = "";
+                plotStartDate.setSeconds(0, 0);
+                break;
+            // ---
+            case (this.range.duration <= 1000 * 60 * 60 * 1): // 小於等於 1 小時
+                this.incrementMilliseconds = 1000 * 60 * 5; // 間隔 5 分鐘
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 2): // 小於等於 2 小時
+                this.incrementMilliseconds = 1000 * 60 * 10; // 間隔 10 分鐘
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 4): // 小於等於 4 小時
+                this.incrementMilliseconds = 1000 * 60 * 15; // 間隔 15 分鐘
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 6): // 小於等於 6 小時
+                this.incrementMilliseconds = 1000 * 60 * 20; // 間隔 20 分鐘
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 12): // 小於等於 12 小時
+                this.incrementMilliseconds = 1000 * 60 * 30; // 間隔 30 分鐘
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            // ---
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 1): // 小於等於 1 天
+                this.incrementMilliseconds = 1000 * 60 * 60; // 間隔小時
+                this.formatString = "HH:mm";
+                // this.formatString = "";
+                plotStartDate.setMinutes(0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 2): // 小於等於 2 天
+                this.incrementMilliseconds = 1000 * 60 * 60 * 6; // 間隔 6 小時
+                this.formatString = "MM/dd HH:mm";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 4): // 小於等於 4 天
+                this.incrementMilliseconds = 1000 * 60 * 60 * 12; // 間隔 12 小時
+                this.formatString = "MM/dd HH:mm";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 7): // 小於等於 1 週
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
+                this.formatString = "(ddd) MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 14): // 小於等於 2 週
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
+                this.formatString = "(ddd) MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 28): // 小於等於 1 月
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
+                this.formatString = "MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                break;
+            // ---
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 28 * 2): // 小於等於 2 月
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 4; // 間隔 4 天
+                this.formatString = "MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 0.25): // 小於等於 4 月
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 7; // 間隔 1 週
+                this.formatString = "MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 0.5): // 小於等於 6 月
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 14; // 間隔 14 天
+                this.formatString = "yyyy/MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425): // 小於等於 1 年
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 28; // 間隔 ~1 月
+                this.formatString = "yyyy/MM/dd";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 2): // 小於等於 2 年
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 0.25; // 間隔 0.25年
+                this.formatString = "yyyy/MM";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 5): // 小於等於 5 年
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 0.5; // 間隔 0.5年
+                this.formatString = "yyyy/MM";
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+            default: // 大於一個月
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.5; // 間隔 1 年
+                this.formatString = "yyyy"
+                // this.formatString = "";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+        }
+        this.plotStartTime = plotStartDate.getTime();
+    }
+
     drawGrid() {
-        const grid = this.dom.grid;
-        const startTime = this.range.start.getTime();
-        const endTime = this.range.end.getTime();
-        const totalDuration = endTime - startTime;
-        const pixelPerMillisecond = grid.width / totalDuration; // px / ms
-
-        let currentDate = new Date(startTime);
-        currentDate.setMinutes(0, 0, 0);
-        const currentTime = currentDate.getTime();
-
-        const startPixel = (currentTime - startTime) * pixelPerMillisecond;
-        const deltaPixel = 1000 * pixelPerMillisecond
+        const gridWidth = this.dom.grid.width;
+        const gridHeight = this.dom.grid.width;
+        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
+        const deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
 
         this.ctx.strokeStyle = '#999';
         this.ctx.lineWidth = 1;
-        if(startPixel > grid.width) return;
-        let num = 0; const max_num = grid.width*this.resolution;
-        for (let x = startPixel; x <= grid.width; x += deltaPixel) {
+        
+        let num = 0; const max_num = gridWidth*this.resolution;
+        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
             if(num>max_num) return;
         	this.ctx.beginPath();
         	this.ctx.moveTo(x, 0);
-        	this.ctx.lineTo(x, grid.height);
+        	this.ctx.lineTo(x, gridHeight);
         	this.ctx.stroke();
             num ++;
         }
     }
 
     drawLabel() {
-        const grid = this.dom.grid;
+        const gridWidth = this.dom.grid.width;
+        const gridHeight = this.dom.grid.height;
+
         const bottom = 200;
         const fontSize = 10;
-        const startTime = this.range.start.getTime();
-        const endTime = this.range.end.getTime();
-
-        const totalDuration = rangeEnd - rangeStart;
-        const pixelsPerMillisecond = grid.width / totalDuration; // 每毫秒對應的像素數
-
-        let incrementMilliseconds;
-        let formatString;
-        let timecase = null;
-        switch (true) {
-            case (totalDuration <= 1000 * 60): // 小於一分鐘
-                timecase = "小於一分鐘";
-                incrementMilliseconds = 1000 * 1; // 每 10 秒
-                formatString = ":ss";
-                break;
-			case (totalDuration <= 1000 * 60 * 30): // 小於等於半小時
-    			timecase = "小於等於一小時";
-		        incrementMilliseconds = 1000 * 30; // 每 10 秒
-		        formatString = "HH:mm";
-		        break;
-            case (totalDuration <= 1000 * 60 * 60): // 小於等於一小時
-                timecase = "小於等於一小時";
-                incrementMilliseconds = 1000 * 60; // 每分鐘
-                formatString = "HH:mm";
-                break;
-            case (totalDuration <= 1000 * 60 * 60 * 12): // 小於等於半天
-                timecase = "小於等於半天";
-                incrementMilliseconds = 1000 * 60 * 30; // 每 30 分鐘
-                formatString = "HH:mm";
-                break;
-            case (totalDuration <= 1000 * 60 * 60 * 24): // 小於等於一天
-                timecase = "小於等於一天";
-                incrementMilliseconds = 1000 * 60 * 60; // 每小時
-                formatString = "HH:mm";
-                break;
-            case (totalDuration <= 1000 * 60 * 60 * 24 * 7): // 小於等於一週
-                timecase = "小於等於一週";
-                incrementMilliseconds = 1000 * 60 * 60 * 6; // 每 6 小時
-                formatString = "MM/dd HH:mm";
-                break;
-            case (totalDuration <= 1000 * 60 * 60 * 24 * 30): // 小於等於一個月
-                timecase = "小於等於一個月";
-                incrementMilliseconds = 1000 * 60 * 60 * 24; // 每天
-                formatString = "MM/dd";
-                break;
-            default: // 大於一個月
-                timecase = "大於一個月";
-                incrementMilliseconds = 1000 * 60 * 60 * 24 * 7; // 每週
-                formatString = "MM/dd/yyyy";
-                break;
-        }
-
-        // const _t1 = this.range.start.getTime() - this.range.center.getTime(),
-        //     _t2 = this.range.end.getTime() - this.range.center.getTime();
-        // // console.log(`${_t1}, ${_t2} ${timecase}`);
-
-
-        // const t1 = formatDate(this.range.start, "MM/dd HH:mm", false),
-        //     t2 = formatDate(this.range.end, "MM/dd HH:mm", false);
-        // // console.log(`${t1}, ${t2} ${timecase}`);
-
         this.ctx.fillStyle = '#000';
         this.ctx.font = `${fontSize*this.resolution}px Arial`;
         this.ctx.textAlign = 'center';
 
-        let currentTime = new Date(rangeStart);
-        // currentTime.setMinutes(0, 0, 0);
-        const gridDelta = Math.floor(grid.width / gridN);
-        
-        for (let x = 0; x <= grid.width; x += gridDelta) {
-            const timeLabel = formatDate(currentTime, formatString, false);
-            this.ctx.fillText(timeLabel,
-                x, grid.height - bottom);
-            currentTime = new Date(currentTime.getTime() + incrementMilliseconds);
+        const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
+        const deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
+
+        let currentDate = new Date(this.plotStartTime);
+        let num = 0; const max_num = 100;
+        for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
+            if(num>max_num) return;
+            const timeLabel = formatDate(currentDate, this.formatString, false);
+            this.ctx.fillText(timeLabel, x, gridHeight - bottom);
+            currentDate = new Date(currentDate.getTime() + this.incrementMilliseconds);
+            num++;
         }
     }
 
     draw() {
+        // this.checkRange();
+        this.calculateGridInformation();
+
+        // draw
         this.ctx.clearRect(0, 0, this.dom.grid.width, this.dom.grid.height);
         this.drawGrid();
         this.drawLabel();
@@ -192,19 +362,35 @@ class Timeline {
         }.bind(this), false);
 
         grid.addEventListener('wheel', function(e) {
-            // return;
-            // e.preventDefault();
-            const rangeStart = this.range.start.getTime(); // 以毫秒為單位的起始時間
-            const rangeEnd = this.range.end.getTime(); // 以毫秒為單位的結束時間
-            let delta = e.deltaY * 1000 * 10;
-            if (e.deltaY < 0 && rangeEnd - rangeStart < 10000) {
-                return;
+            e.preventDefault();
+            const startTime = this.range.start.time;
+            const endTime = this.range.end.time;
+            const minTime = this.range.min;
+
+            let deltaY = e.deltaY * 5000000;
+            let newStartDate = new Date(startTime - deltaY);
+            let newEndDate = new Date(endTime + deltaY);
+
+            // console.log(`draw => delta: ${this.range.end.time - this.range.start.time}`);
+            if(newStartDate - newEndDate > minTime){
+                const midTime = (startTime + endTime) * 0.5;
+                newStartDate = new Date(midTime - minTime*0.5);
+                newEndDate = new Date(midTime + minTime*0.5);
+                this.range.start.date = newStartDate;
+                this.range.end.date = newEndDate;
+                // return;
             }
-            this.range.start = new Date(rangeStart - delta);
-            this.range.end = new Date(rangeEnd + delta);
+
+            if(e.deltaX) {
+                const deltaX = e.deltaX * 1000000;
+                newStartDate = new Date(startTime + e.deltaX);
+                newEndDate = new Date(endTime + e.deltaX);
+            }
+
+            this.range.start.date = newStartDate;
+            this.range.end.date = newEndDate;
             this.draw();
-        }.bind(this), false);
-        // requestAnimationFrame(this.drawMouseGrid.bind(this));
+        }.bind(this), { passive: false });
     }
 }
 
