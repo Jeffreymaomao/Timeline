@@ -10,9 +10,10 @@ class Timeline {
         this.ctx = null;
         this.mousePosition = null;
         this.mouseDate = null;
+        this.axisY = null;
         this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        this.axisHeight = 0.2; // ratio (0 ~ 1)
+        this.axisHeight = 0.15; // ratio (0 ~ 1)
         this.pixelsPerMillisecond = null;
         this.incrementMilliseconds = null;
         this.deltaPixel = null
@@ -35,6 +36,7 @@ class Timeline {
             min: 1000, // 1 second in ms
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
+        // ---
 
         this.colorWhite = {
             background: 'rgba(255,255,255,1.0)',
@@ -72,17 +74,13 @@ class Timeline {
             mouse: 5
         };
 
-        // this.range.start.date.setSeconds(this.range.start.date.getSeconds() - 1);
-        // this.range.end.date.setSeconds(this.range.end.date.getSeconds() + 1);
+        // ---
+        this.events = [];
 
-        // this.range.start.date.setMinutes(this.range.start.date.getMinutes() - 5);
-        // this.range.end.date.setMinutes(this.range.end.date.getMinutes() + 5);
+        // ---
 
-        // this.range.start.date.setMinutes(this.range.start.date.getMinutes() - 20);
-        // this.range.end.date.setMinutes(this.range.end.date.getMinutes() + 20);
-
-        this.range.start.date.setHours(this.range.start.date.getHours() - 10);
-        this.range.end.date.setHours(this.range.end.date.getHours() + 10);
+        this.range.start.date.setHours(this.range.start.date.getHours() - 2);
+        this.range.end.date.setHours(this.range.end.date.getHours() + 2);
 
         this.calculateGridInformation();
         this.initializeDOM(config.parentDOM || document.body);
@@ -113,6 +111,7 @@ class Timeline {
     initializeGrid() {
         const grid = this.dom.grid;
         this.ctx = grid.getContext('2d');
+        this.axisY = this.dom.grid.height * (1.0 - this.axisHeight);
         this.resizeCanvas();
         this.calculateGridInformation();
         this.bindEvents();
@@ -129,6 +128,7 @@ class Timeline {
         grid.style.width = `${size[0]}px`;
         grid.style.height = `${size[1]}px`;
         this.ctx.clearRect(0, 0, grid.width, grid.height);
+        this.axisY = grid.height * (1.0 - this.axisHeight);
     }
 
     drawMouseGrid() {
@@ -153,11 +153,10 @@ class Timeline {
         this.ctx.stroke();
         this.ctx.closePath();
 
-        const axisY = gridHeight * (1.0 - this.axisHeight);
         const radius = this.radius.mouse * this.resolution;
         this.ctx.fillStyle = this.color.mouse;
         this.ctx.beginPath();
-        this.ctx.arc(x, axisY, radius, 0, 6.283185307179586);
+        this.ctx.arc(x, this.axisY, radius, 0, 6.283185307179586);
         this.ctx.fill();
         this.ctx.closePath();
     }
@@ -167,7 +166,6 @@ class Timeline {
         const gridHeight = this.dom.grid.height;
         const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
         const deltaPixel = this.incrementMilliseconds * this.pixelsPerMillisecond;
-        const axisY = gridHeight * (1.0 - this.axisHeight);
 
         this.ctx.strokeStyle = this.color.grid;
         this.ctx.lineWidth = this.lineWidth.grid * this.resolution;
@@ -191,8 +189,8 @@ class Timeline {
             if(num>max_num) return;
             // aub-vertical grid on axis
             this.ctx.beginPath();
-            this.ctx.moveTo(x+deltaPixel*0.5, axisY-10);
-            this.ctx.lineTo(x+deltaPixel*0.5, axisY+10);
+            this.ctx.moveTo(x+deltaPixel*0.5, this.axisY-10);
+            this.ctx.lineTo(x+deltaPixel*0.5, this.axisY+10);
             this.ctx.stroke();
             this.ctx.closePath();
             num++;
@@ -202,8 +200,8 @@ class Timeline {
         this.ctx.strokeStyle = this.color.mainAxis;
         this.ctx.lineWidth = this.lineWidth.mainAxis * this.resolution;
         this.ctx.beginPath();
-        this.ctx.moveTo(0, axisY);
-        this.ctx.lineTo(gridWidth, axisY);
+        this.ctx.moveTo(0, this.axisY);
+        this.ctx.lineTo(gridWidth, this.axisY);
         this.ctx.stroke();
         this.ctx.closePath();
     }
@@ -215,13 +213,12 @@ class Timeline {
 
         const gridHeight = this.dom.grid.height;
         const nowPositionX = (nowTime - this.range.start.time) * this.pixelsPerMillisecond;
-        const axisY = gridHeight * (1.0 - this.axisHeight);
         const radius = this.radius.now * this.resolution;
 
         this.ctx.fillStyle = this.color.now;
         this.ctx.strokeStyle = this.color.now;
         this.ctx.beginPath();
-        this.ctx.arc(nowPositionX, axisY, radius, 0, 6.283185307179586);
+        this.ctx.arc(nowPositionX, this.axisY, radius, 0, 6.283185307179586);
         this.ctx.fill();
         this.ctx.closePath();
 
@@ -242,10 +239,10 @@ class Timeline {
 
     drawLabel() {
         const gridWidth = this.dom.grid.width;
-        const gridHeight = this.dom.grid.height;
+        const fontSize = this.fontSize*this.resolution
 
         this.ctx.fillStyle = this.color.label;
-        this.ctx.font = `${this.fontSize*this.resolution}px Arial`;
+        this.ctx.font = `${fontSize}px Arial`;
         this.ctx.textAlign = 'center';
 
         const startPixel = (this.plotStartTime - this.range.start.time) * this.pixelsPerMillisecond;
@@ -256,7 +253,7 @@ class Timeline {
         for (let x = startPixel; x <= gridWidth; x += deltaPixel) {
             if(num>max_num) return;
             const timeLabel = formatDate(currentDate, this.formatString, false);
-            this.ctx.fillText(timeLabel, x, gridHeight * (1.0 - this.axisHeight) - 10); // 10 px if offset of label
+            this.ctx.fillText(timeLabel, x, this.axisY + fontSize + 5); // 10 px if offset of label
             currentDate = new Date(currentDate.getTime() + this.incrementMilliseconds);
             num++;
         }
@@ -273,7 +270,8 @@ class Timeline {
         // draw other
         this.drawGrid();
         this.drawLabel();
-        this.drawNow()
+        this.drawNow();
+        this.drawEvents();
         this.drawMouseGrid();
     }
 
@@ -520,7 +518,7 @@ class Timeline {
 
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 5): // 小於等於 5 年
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 0.5; // 間隔 0.5年
-                this.formatString = "yyyy/MM";
+                this.formatString = "yyyy";
                 this.scaleRatio = 50000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
@@ -528,13 +526,60 @@ class Timeline {
             default: // 大於 
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.5 * 5; // 間隔 1 年
                 this.formatString = "yyyy";
-                this.scaleRatio = 100000000;
+                this.scaleRatio = 1000000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setFullYear(1969, 0, 1);
                 break;
         }
         this.plotStartTime = plotStartDate.getTime();
     }
+}
+
+Timeline.prototype.addEvent = function(eventDate) {
+    if(!this.events) this.events = [];
+    this.events.push({
+        date: eventDate
+    });
+
+}
+
+Timeline.prototype.drawEvents = function() {
+
+
+
+    this.events.forEach((event)=>{
+        const eventTime = event.date.getTime();
+        if(eventTime < this.range.start.time || this.range.end.time < eventTime) return;
+
+        const eventPositionX = (eventTime - this.range.start.time) * this.pixelsPerMillisecond;
+
+
+        const radius = 8.0 * this.resolution;
+        const height = 16.0 * this.resolution; // height > radius
+        const leanLine = Math.sqrt(height*height-radius*radius);
+        const _x = leanLine * radius/height;
+        const _y = leanLine * leanLine/height;
+        const deltaAngle = Math.atan(radius/leanLine); // Math.atan2(radius, leanLine)
+        const outerColor = "rgb(200,100,100)";
+        const innerColor = "white";
+
+        this.ctx.fillStyle = outerColor;
+        this.ctx.beginPath();
+        this.ctx.moveTo(eventPositionX, this.axisY);
+        this.ctx.lineTo(eventPositionX - _x, this.axisY - _y);
+        this.ctx.arc(eventPositionX, this.axisY - height,radius, Math.PI - deltaAngle, 0 + deltaAngle);
+        this.ctx.lineTo(eventPositionX, this.axisY);
+        this.ctx.fill();
+        this.ctx.closePath();
+
+        this.ctx.fillStyle = innerColor;
+        this.ctx.beginPath();
+        this.ctx.arc(eventPositionX, this.axisY-height, radius*0.5, 0, Math.PI*2);
+        this.ctx.fill();
+        this.ctx.closePath();
+
+        // ctx.measureText
+    });
 }
 
 export { Timeline };

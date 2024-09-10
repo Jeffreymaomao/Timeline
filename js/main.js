@@ -6,8 +6,17 @@ import { Timeline } from "./timeline.js";
 
 window.addEventListener("load", () => {
     window.app = new App();
+    // test
+    // (()=>{
+    //     for(let i=0;i<30;i++){
+    //         const deltaHour = (2.0*Math.random()-1)*1.5;
+    //         const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour); eventDate.setMilliseconds(0);
+    //         app.timeline.addEvent(eventDate);
+    //     }
+    // })();
 });
 
+// ---
 class App {
     constructor(config = {}) {
         this.initializeDOM(config.parentDOM || document.body);
