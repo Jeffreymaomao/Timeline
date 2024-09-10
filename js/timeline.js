@@ -324,7 +324,9 @@ class Timeline {
                 return;
             } else if(e.deltaY>0 && endTime - startTime > maxDuration){
                 return;
-            } else if(e.deltaX) {
+            }
+
+            if(e.deltaX) {
                 const deltaX = e.deltaX * this.scaleRatio * this._scaleRatioX;
                 newStartDate = new Date(startTime + deltaX);
                 newEndDate = new Date(endTime + deltaX);
