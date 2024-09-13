@@ -254,7 +254,13 @@ function addStyle(style) {
     document.head.appendChild(styleSheet);
 }
 
-function hash(str) {
+function hash(str, type=null) {
+    if(typeof str !== 'string') str = `${str}`;
+    if(type==='uuid') return uuid_hash(str);
+    return default_hash(str);
+}
+
+function default_hash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
@@ -273,9 +279,101 @@ function hash(str) {
     return result;
 }
 
+function uuid_hash(str) {
+    let d = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        d = (d << 5) - d + char;
+        d |= 0; // Convert to 32-bit integer
+    }
+    d = Math.abs(d);
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        d += performance.now(); //use high-precision timer if available
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+function findContainment(element, container) {
+    // https://stackoverflow.com/a/59498518
+    /*
+    Obtain the bounding rectangle for each element 
+    */
+    const brE = element.getBoundingClientRect()
+    const brC = container.getBoundingClientRect()
+
+    /* 
+    If the boundaries of container pass through the boundaries of
+    element then classifiy this as an overlap 
+    */
+    if (
+        /* Does container left or right edge pass through element? */
+        (brE.left < brC.left && brE.right > brC.left) ||
+        (brE.left < brC.right && brE.right > brC.right) ||
+        /* Does container top or bottom edge pass through element? */
+        (brE.top < brC.top && brE.bottom > brC.top) ||
+        (brE.top < brC.bottom && brE.bottom > brC.bottom)) {
+
+        return "overlap";
+    }
+
+    /* 
+    If boundaries of element fully contained inside bounday of
+    container, classify this as containment of element in container
+    */
+    if (
+        brE.left >= brC.left &&
+        brE.top >= brC.top &&
+        brE.bottom <= brC.bottom &&
+        brE.right <= brC.right
+    ) {
+        return "contained"
+    }
+
+    /* 
+    Otherwise, the element is fully outside the container 
+    */
+    return "outside"
+
+}
+
+function is2DomsOverlay(dom1, dom2) {
+    const br1 = dom1.getBoundingClientRect()
+    const br2 = dom2.getBoundingClientRect()
+    if (
+        /* Does container left or right edge pass through element? */
+        (br1.left < br2.left && br1.right > br2.left) ||
+        (br1.left < br2.right && br1.right > br2.right) ||
+        /* Does container top or bottom edge pass through element? */
+        (br1.top < br2.top && br1.bottom > br2.top) ||
+        (br1.top < br2.bottom && br1.bottom > br2.bottom)) {
+        return true;
+    }
+    return false;
+}
+
+function is2BoundsOverlay(bd1, bd2) {
+    if (
+        /* Does container left or right edge pass through element? */
+        (bd1.left < bd2.left   && bd1.right  > bd2.left) ||
+        (bd1.left < bd2.right  && bd1.right  > bd2.right) ||
+        /* Does container top or bottom edge pass through element? */
+        (bd1.top  < bd2.top    && bd1.bottom > bd2.top) ||
+        (bd1.top  < bd2.bottom && bd1.bottom > bd2.bottom)) {
+        return true;
+    }
+    return false;
+}
+
 export {
     createAndAppendDOM,
     createAndAppendElement, 
+    findContainment,
+    is2DomsOverlay,
+    is2BoundsOverlay,
     formatDate,
     getTime,
     addStyle,
