@@ -1,13 +1,13 @@
 import {
     createAndAppendDOM,
-    is2BoundsOverlay,
+    is2BoundsOverlapping,
     formatDate,
     hash
 } from "./tools.js";
 
 class Timeline {
     constructor(config) {
-        this.resolution = 1;
+        this.resolution = 2;
         this.fontSize = 13;
         this.ctx = null;
         this.mousePosition = null;
@@ -558,7 +558,7 @@ Timeline.prototype.addEvent = function(event) {
     const eventDate = event.date;
     const eventId = event.id || hash(eventDate, 'uuid');
     const eventTitle = event.title || '';
-    const markerDOM = createAndAppendDOM(this.dom.markersContainer, "dom.marker.event", {
+    const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.event", {
         innerText: eventTitle,
         id: eventId,
         style: 'position: absolute'
@@ -572,68 +572,96 @@ Timeline.prototype.addEvent = function(event) {
 }
 
 Timeline.prototype.drawEvents = function() {
-    const inTimeRangeEvents = {};
-    const defaultHeight = 100; // px
+    const defaultHeight = 50; // px
+    const heightGap = 10; // px
+
+    this.onScreenEvents = [];
 
     // draw line in canvas
     Object.keys(this.events).forEach((eventId)=>{
         const event = this.events[eventId];
         const eventTime = event.date.getTime();
-        if(eventTime < this.range.start.time || this.range.end.time < eventTime) return;
-
-        const eventPositionX = (eventTime - this.range.start.time) * this.pixelsPerMillisecond;
-        this.drawEventLine(eventPositionX, defaultHeight);
-        inTimeRangeEvents[eventId] = {
-            dom: this.marker.events[eventId].dom,
-            x: eventPositionX
-        };
-    });
-
-    // draw dom
-    this.onScreenEvents = [];
-    Object.keys(this.marker.events).forEach((eventId)=>{
-        if(!inTimeRangeEvents[eventId]){
+        // ---
+        if(eventTime < this.range.start.time || this.range.end.time < eventTime){
             this.marker.events[eventId].dom.style.display = "none";
             return;
         }
+        // ---
         this.marker.events[eventId].dom.style.display = "block";
-        const event = inTimeRangeEvents[eventId];
-        const eventDOM = event.dom;
-        const bound = eventDOM.getBoundingClientRect();
-        const x = ( event.x ) / this.resolution - bound.width*0.5;
+        const eventPositionX = (eventTime - this.range.start.time) * this.pixelsPerMillisecond;
+        // ---
+        const eventDOM = this.marker.events[eventId].dom;
+        let bound = eventDOM.getBoundingClientRect();
+        // ---
+        const x = ( eventPositionX ) / this.resolution - bound.width*0.5;
         let y = ( this.axisY ) / this.resolution - defaultHeight - bound.height;
-
-        // check 
-        this.onScreenEvents.forEach((onScreenEvent)=>{
-            const onScreenEventBound = onScreenEvent.bound;
-            if(!is2BoundsOverlay(bound, onScreenEventBound)) return;
-            y -= onScreenEventBound.height;
-        });
         eventDOM.style.left = `${x}px`; // real sreen position x
         eventDOM.style.top = `${y}px`; // real sreen position y
+        bound = eventDOM.getBoundingClientRect();
+        // ---
+
+        this.onScreenEvents.forEach((onScreenEvent)=>{
+            const onScreenEventBound = onScreenEvent.bound;
+            if(is2BoundsOverlapping(bound, onScreenEventBound)){
+                y -= onScreenEventBound.height + heightGap;
+                if(y<0){
+                    // out off screen
+                    if(y<=0) this.marker.events[eventId].dom.style.display = "none";
+                    return;
+                }
+
+                eventDOM.style.top = `${y}px`; // real sreen position y
+                bound = eventDOM.getBoundingClientRect();
+            }
+        });
 
         this.onScreenEvents.push({
             id: eventId,
             bound: bound
         });
-    });
 
+        // ---
+        // draw line
+        // since y is px from top
+        const eventPositionY = this.axisY/this.resolution - y - bound.height;
+        this.drawEventLine(eventPositionX, eventPositionY);
+    });
 }
 
 Timeline.prototype.drawEventLine = function (positionX, defaultHeight=100) {
-    const lineWidth = 1.5 * this.resolution;
+    const color = "rgba(100,10,10)";
+    const lineWidth = 1.2 * this.resolution;
     const height = defaultHeight * this.resolution;
+    const triangleHeight = 10 * this.resolution;
+    const triangleHalfWidth = 8 * this.resolution;
+    const boxBottomPositionY = this.axisY - height - 2; // a little offset
+    const radius = 3 * this.resolution;
 
-    this.ctx.strokeStyle = "rgba(100,10,10)";
+    this.ctx.strokeStyle = color;
+    this.ctx.fillStyle = color;
     this.ctx.lineWidth = lineWidth;
-    this.ctx.setLineDash([30, 5]);
     this.ctx.beginPath();
-    this.ctx.moveTo(positionX, this.axisY - height);
-    this.ctx.lineTo(positionX, this.axisY);
+    this.ctx.moveTo(positionX, this.axisY);
+    this.ctx.lineTo(positionX, boxBottomPositionY + triangleHeight);
+    this.ctx.quadraticCurveTo(
+        positionX - triangleHalfWidth*0.2,
+        boxBottomPositionY,
+        positionX - triangleHalfWidth,
+        boxBottomPositionY);
+    this.ctx.lineTo(positionX + triangleHalfWidth, boxBottomPositionY);
+    this.ctx.quadraticCurveTo(
+        positionX + triangleHalfWidth*0.2,
+        boxBottomPositionY,
+        positionX,
+        boxBottomPositionY + triangleHeight)
     this.ctx.stroke();
+    this.ctx.fill();
     this.ctx.closePath();
 
-    // markerDOM.style.left = 
+    this.ctx.beginPath();
+    this.ctx.arc(positionX, this.axisY, radius, 0, Math.PI*2);
+    this.ctx.fill();
+    this.ctx.closePath();
 }
 
 

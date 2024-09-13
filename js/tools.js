@@ -297,83 +297,32 @@ function uuid_hash(str) {
     });
 }
 
-function findContainment(element, container) {
-    // https://stackoverflow.com/a/59498518
-    /*
-    Obtain the bounding rectangle for each element 
-    */
-    const brE = element.getBoundingClientRect()
-    const brC = container.getBoundingClientRect()
+function is2DomsOverlapping(element1, element2) {
+    const rect1 = element1.getBoundingClientRect(); 
+    const rect2 = element2.getBoundingClientRect(); 
+ 
+    return !( 
+        rect1.right < rect2.left ||    // Element 1 is left of Element 2 
+        rect1.left > rect2.right ||    // Element 1 is right of Element 2 
+        rect1.bottom < rect2.top ||    // Element 1 is above Element 2 
+        rect1.top > rect2.bottom       // Element 1 is below Element 2 
+    ); 
+} 
 
-    /* 
-    If the boundaries of container pass through the boundaries of
-    element then classifiy this as an overlap 
-    */
-    if (
-        /* Does container left or right edge pass through element? */
-        (brE.left < brC.left && brE.right > brC.left) ||
-        (brE.left < brC.right && brE.right > brC.right) ||
-        /* Does container top or bottom edge pass through element? */
-        (brE.top < brC.top && brE.bottom > brC.top) ||
-        (brE.top < brC.bottom && brE.bottom > brC.bottom)) {
-
-        return "overlap";
-    }
-
-    /* 
-    If boundaries of element fully contained inside bounday of
-    container, classify this as containment of element in container
-    */
-    if (
-        brE.left >= brC.left &&
-        brE.top >= brC.top &&
-        brE.bottom <= brC.bottom &&
-        brE.right <= brC.right
-    ) {
-        return "contained"
-    }
-
-    /* 
-    Otherwise, the element is fully outside the container 
-    */
-    return "outside"
-
-}
-
-function is2DomsOverlay(dom1, dom2) {
-    const br1 = dom1.getBoundingClientRect()
-    const br2 = dom2.getBoundingClientRect()
-    if (
-        /* Does container left or right edge pass through element? */
-        (br1.left < br2.left && br1.right > br2.left) ||
-        (br1.left < br2.right && br1.right > br2.right) ||
-        /* Does container top or bottom edge pass through element? */
-        (br1.top < br2.top && br1.bottom > br2.top) ||
-        (br1.top < br2.bottom && br1.bottom > br2.bottom)) {
-        return true;
-    }
-    return false;
-}
-
-function is2BoundsOverlay(bd1, bd2) {
-    if (
-        /* Does container left or right edge pass through element? */
-        (bd1.left < bd2.left   && bd1.right  > bd2.left) ||
-        (bd1.left < bd2.right  && bd1.right  > bd2.right) ||
-        /* Does container top or bottom edge pass through element? */
-        (bd1.top  < bd2.top    && bd1.bottom > bd2.top) ||
-        (bd1.top  < bd2.bottom && bd1.bottom > bd2.bottom)) {
-        return true;
-    }
-    return false;
+function is2BoundsOverlapping(rect1, rect2) {
+    return !( 
+        rect1.right <= rect2.left || 
+        rect1.left >= rect2.right || 
+        rect1.bottom <= rect2.top || 
+        rect1.top >= rect2.bottom
+    ); 
 }
 
 export {
     createAndAppendDOM,
-    createAndAppendElement, 
-    findContainment,
-    is2DomsOverlay,
-    is2BoundsOverlay,
+    createAndAppendElement,
+    is2DomsOverlapping,
+    is2BoundsOverlapping,
     formatDate,
     getTime,
     addStyle,
