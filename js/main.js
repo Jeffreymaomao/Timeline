@@ -8,7 +8,7 @@ import { Timeline } from "./timeline.js";
 window.addEventListener("load", () => {
     window.app = new App();
     (()=>{
-        for(let i=0;i<100;i++){
+        for(let i=0;i<20;i++){
             const deltaHour = (2.0*Math.random()-1)*1.5;
             const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour);
             eventDate.setMilliseconds(0);
