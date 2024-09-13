@@ -1,19 +1,27 @@
 import {
-    createAndAppendDOM
+    createAndAppendDOM,
+    hash
 } from "./tools.js";
 
 import { Timeline } from "./timeline.js";
 
 window.addEventListener("load", () => {
     window.app = new App();
-    // test
-    // (()=>{
-    //     for(let i=0;i<30;i++){
-    //         const deltaHour = (2.0*Math.random()-1)*1.5;
-    //         const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour); eventDate.setMilliseconds(0);
-    //         app.timeline.addEvent(eventDate);
-    //     }
-    // })();
+    (()=>{
+        for(let i=0;i<20;i++){
+            const deltaHour = (2.0*Math.random()-1)*1.5;
+            const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour);
+            eventDate.setMilliseconds(0);
+            if(Math.random()>0.2) eventDate.setMinutes(0,0,0);
+
+            const hashName = hash(`${deltaHour}`).slice(0,10);
+            
+            app.timeline.addEvent({
+                date: eventDate,
+                title: hashName
+            });
+        }
+    })();
 });
 
 // ---
