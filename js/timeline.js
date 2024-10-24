@@ -24,6 +24,7 @@ class Timeline {
         this._scaleRatioY = 2;
         this.plotStartTime = null;
         this.formatString = null;
+        this.isCheckOverlapping = true;
 
         this.range = {
             start: {
@@ -118,6 +119,26 @@ class Timeline {
         };
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', changeToDarkLightMode.bind(this), false);
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', changeToDarkLightMode.bind(this), false);
+        this.initControlPanel();
+    }
+
+    initControlPanel() {
+        this.dom.controlPanel = createAndAppendDOM(this.dom.parentDOM, 'div', {
+            class: 'control-panel'
+        });
+        this.dom.checkOverlapLabel = createAndAppendDOM(this.dom.controlPanel, 'label', {
+            innerText: 'check overlap',
+            htmlFor: 'check-overlap'
+        });
+        this.dom.checkOverlap = createAndAppendDOM(this.dom.controlPanel, 'input', {
+            type: 'checkbox',
+            id: 'check-overlap',
+            checked: this.isCheckOverlapping ? true : false
+        });
+        this.dom.checkOverlap.onchange = (e)=>{
+            this.isCheckOverlapping = this.dom.checkOverlap.checked;
+            window.requestAnimationFrame(this.draw.bind(this));
+        };
     }
 
     initializeGrid() {
@@ -550,6 +571,13 @@ class Timeline {
     }
 }
 
+Timeline.prototype.clearEvent = function(){
+    Object.values(this.marker.events).forEach((e)=>{e.dom.remove()});
+    this.events = {};
+    this.marker.events = {};
+}
+
+
 Timeline.prototype.addEvent = function(event) {
     if(!this.events) this.events = {};
     if(!this.marker.events) this.marker.events = {};
@@ -599,21 +627,21 @@ Timeline.prototype.drawEvents = function() {
         eventDOM.style.top = `${y}px`; // real sreen position y
         bound = eventDOM.getBoundingClientRect();
         // ---
-
-        this.onScreenEvents.forEach((onScreenEvent)=>{
-            const onScreenEventBound = onScreenEvent.bound;
-            if(is2BoundsOverlapping(bound, onScreenEventBound)){
-                y -= onScreenEventBound.height + heightGap;
-                if(y<0){
-                    // out off screen
-                    if(y<=0) this.marker.events[eventId].dom.style.display = "none";
-                    return;
+        if(this.isCheckOverlapping){
+            this.onScreenEvents.forEach((onScreenEvent)=>{
+                const onScreenEventBound = onScreenEvent.bound;
+                if(is2BoundsOverlapping(bound, onScreenEventBound)){
+                    y -= onScreenEventBound.height + heightGap;
+                    if(y<0){
+                        // out off screen
+                        if(y<=0) this.marker.events[eventId].dom.style.display = "none";
+                        return;
+                    }
+                    eventDOM.style.top = `${y}px`; // real sreen position y
+                    bound = eventDOM.getBoundingClientRect();
                 }
-
-                eventDOM.style.top = `${y}px`; // real sreen position y
-                bound = eventDOM.getBoundingClientRect();
-            }
-        });
+            });
+        }
 
         this.onScreenEvents.push({
             id: eventId,
