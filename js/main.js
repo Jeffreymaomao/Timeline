@@ -1,66 +1,58 @@
 import { createAndAppendDOM, hash, parseFormattedDate, parseCSV} from "./tools.js";
-
 import { Timeline } from "./timeline.js";
 
-const randomTest = ()=>{
+window.addEventListener("load", () => {
+    if (window.self !== window.top) {
+        document.body.classList.add("is-iframe");
+    }
+    const windowParams = new URLSearchParams(window.location.search);
+    // ---
+    const isUserCheckOverlap = `${windowParams.get('check_overlap')}`.toLowerCase() === 'true'
+    const fps = Number(windowParams.get('fps'));
+    const app = new App({
+        parentDOM: document.body,
+        checkOverlap: isUserCheckOverlap,
+        fps: fps
+    });
+    // ---
+    let eventLogFile = windowParams.get('events');
+    const lineSeperator = windowParams.get('sep');
+    if(eventLogFile) {
+        if(lineSeperator) {
+            eventLogFile = eventLogFile.replaceAll(lineSeperator, '\n');
+        }
+        app.loadFile(eventLogFile);
+    }
+    window.app = app;
+});
+
+const randomTest = (app)=>{
     app.timeline.clearEvent();
     for(let i=0;i<20;i++){
         const deltaHour = (2.0*Math.random()-1)*1.5;
         const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour);
         eventDate.setMilliseconds(0);
         const hashName = hash(`${deltaHour}`).slice(0,10);
-        app.timeline.addEvent({
-            date: eventDate,
-            title: hashName
-        });
+        app.timeline.addEvent({date: eventDate,title: hashName});
     }
 }
 
-const fileTest = ()=>{
-    const file_content = `
-    hh:mm
-    00:00, This is for 00:00 test!
-    01:00, This is for 01:00 test!
-    02:00, This is for 02:00 test!
-    03:00, This is for 03:00 test!
-    04:00, This is for 04:00 test!
-    05:00, This is for 05:00 test!
-    06:00, This is for 06:00 test!
-    07:00, This is for 07:00 test!
-    08:00, This is for 08:00 test!
-    09:00, This is for 09:00 test!
-    10:00, This is for 10:00 test!
-    11:00, This is for 11:00 test!
-    12:00, This is for 12:00 test!
-    13:00, This is for 13:00 test!
-    14:00, This is for 14:00 test!
-    15:00, This is for 15:00 test!
-    16:00, This is for 16:00 test!
-    17:00, This is for 17:00 test!
-    18:00, This is for 18:00 test!
-    19:00, This is for 19:00 test!
-    20:00, This is for 20:00 test!
-    21:00, This is for 21:00 test!
-    22:00, This is for 22:00 test!
-    24:00, This is for 24:00 test!
-    23:00, This is for 23:00 test!
-    `;
+const fileTest = (app)=>{
+    let file_content = "hh:mm\n";
+    for (let i = 0; i <= 23; i++) {
+      let hour = i.toString().padStart(2, "0");
+      file_content += `${hour}:00, This is for ${hour}:00 test!\n`;
+    }
     app.loadFile(file_content);
 }
-
-window.addEventListener("load", () => {
-    window.app = new App();
-    // randomTest();
-    fileTest();
-});
-
-
 
 // ---
 class App {
     constructor(config = {}) {
         this.initializeDOM(config.parentDOM || document.body);
-        this.timeline = new Timeline({ parentDOM: this.dom.content });
+        this.timeline = new Timeline(Object.assign(config, {
+            parentDOM: this.dom.content
+        }));
         this.initFileDropEvent();
     }
 
