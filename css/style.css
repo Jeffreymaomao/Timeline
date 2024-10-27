@@ -12,7 +12,7 @@ body {
 }
 
 body.dark {
-    background-color: #222;
+    background-color: #333;
 }
 
 .top-bar {
@@ -44,17 +44,28 @@ body.dark {
     overflow: hidden;
 }
 
+body.is-iframe .content {
+    margin: 10px;
+    width: calc(100% - 2*10px);
+    height: calc(100% - 2*10px);
+}
+
 /** -------
  * Marker
  * -------- */
 
 .marker {
-    border: 1px solid rgb(100,10,10);
-    color: floralwhite;
     padding: 5px;
     border-radius: 5px;
-    background-color: rgba(100,10,10);
-    box-shadow: 0 0 5px #888;
+    min-width: 30px;
+    min-height: 28px;
+    color: floralwhite;
+    background-color: rgba(200,0,0,0.9);
+}
+
+body.dark .marker {
+    box-shadow: 0 0 2px #555;
+    background-color: rgba(200,50,70,0.9);
 }
 
 /** -------
@@ -67,19 +78,27 @@ body.dark {
     border-radius: 10px;
     background-color: rgba(250,250,250,0.5);
     margin: 5px;
-    padding: 3px;
+    padding: 5px;
+    font-size: 10pt;
 }
 .control-panel label {
-    margin: 5px 0px 5px 10px;
+    padding-right: 5px;
     color: #555;
     cursor: pointer;
     vertical-align: middle;
 }
 
-.control-panel input {
-    margin: 5px 5px;
+.control-panel input[type="checkbox"]{
     cursor: pointer;
     vertical-align: middle;
+}
+
+body.dark .control-panel {
+    background-color: rgba(100,100,100,0.5);
+}
+
+body.dark .control-panel label{
+    color: #bbb;
 }
 
 
