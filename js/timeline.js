@@ -96,7 +96,6 @@ class Timeline {
 
         this.calculateGridInformation();
         this.initializeDOM(config.parentDOM || document.body);
-        console.log(this.fps)
         if(this.fps >= 60) {
             this.loop();
         } else {
