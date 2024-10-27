@@ -8,7 +8,7 @@ window.addEventListener("load", () => {
     const windowParams = new URLSearchParams(window.location.search);
     // ---
     const isUserCheckOverlap = `${windowParams.get('check_overlap')}`.toLowerCase() === 'true'
-    const fps = Number(windowParams.get('fps'));
+    const fps = Number(windowParams.get('fps')) || 10;
     const app = new App({
         parentDOM: document.body,
         checkOverlap: isUserCheckOverlap,
@@ -16,7 +16,7 @@ window.addEventListener("load", () => {
     });
     // ---
     let eventLogFile = windowParams.get('events');
-    const lineSeperator = windowParams.get('sep');
+    const lineSeperator = windowParams.get('sep') || '|';
     if(eventLogFile) {
         if(lineSeperator) {
             eventLogFile = eventLogFile.replaceAll(lineSeperator, '\n');
