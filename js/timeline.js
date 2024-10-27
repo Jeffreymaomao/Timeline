@@ -24,7 +24,9 @@ class Timeline {
         this._scaleRatioY = 2;
         this.plotStartTime = null;
         this.formatString = null;
-        this.isCheckOverlapping = true;
+        this.isCheckOverlapping = config.checkOverlap?true:false;
+
+        this.fps = Number(config.fps) || 10;
 
         this.range = {
             start: {
@@ -45,6 +47,7 @@ class Timeline {
             background: 'rgba(255,255,255,1.0)',
             mouse: 'rgba(0,0,200,0.8)',
             now: 'rgba(200,0,0,0.8)',
+            event: 'rgba(200,0,0,0.8)',
             label: '#222',
             mainAxis: '#333',
             subAxis: '#333',
@@ -52,13 +55,14 @@ class Timeline {
         };
 
         this.colorDark = {
-            background: 'rgba(0,0,0,1.0)',
+            background: '#222222',
             mouse: 'rgba(100,200,255,0.9)',
-            now: 'rgba(250,30,100,0.9)',
+            now: 'rgba(250,30,100,0.8)',
+            event: 'rgba(200,50,70,0.8)',
             label: '#fff',
             mainAxis: '#eee',
             subAxis: '#eee',
-            grid: '#999'
+            grid: '#555'
         };
 
         this.color = this.colorWhite;
@@ -87,14 +91,19 @@ class Timeline {
 
         // ---
 
-        this.range.start.date.setHours(this.range.start.date.getHours() - 2);
-        this.range.end.date.setHours(this.range.end.date.getHours() + 2);
+        this.range.start.date.setHours(this.range.start.date.getHours() - 12);
+        this.range.end.date.setHours(this.range.end.date.getHours() + 12);
 
         this.calculateGridInformation();
         this.initializeDOM(config.parentDOM || document.body);
-        
-        // this.loop();
-        // window.setInterval(function(){window.requestAnimationFrame(this.draw.bind(this))}.bind(this), 500);
+        console.log(this.fps)
+        if(this.fps >= 60) {
+            this.loop();
+        } else {
+            window.setInterval(function(){
+                window.requestAnimationFrame(this.draw.bind(this))
+            }.bind(this), 1000/this.fps);
+        }
     }
 
     initializeDOM(parentDOM) {
@@ -657,14 +666,13 @@ Timeline.prototype.drawEvents = function() {
 }
 
 Timeline.prototype.drawEventLine = function (positionX, defaultHeight=100) {
-    const color = "rgba(100,10,10)";
+    const color = this.color.event;
     const lineWidth = 1.2 * this.resolution;
     const height = defaultHeight * this.resolution;
     const triangleHeight = 10 * this.resolution;
     const triangleHalfWidth = 8 * this.resolution;
     const boxBottomPositionY = this.axisY - height - 2; // a little offset
     const radius = 3 * this.resolution;
-
     this.ctx.strokeStyle = color;
     this.ctx.fillStyle = color;
     this.ctx.lineWidth = lineWidth;
