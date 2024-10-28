@@ -1,4 +1,10 @@
-# Timeline
+<p align='center'>
+<a href='https://jeffreymaomao.github.io/Timeline/'>
+    <img alt="Timeline Logo" src="assets/icon.png" width='120'>
+</a>
+<br>
+<h1 align='center'>Timeline</h1>
+</p>
 
 The **Timeline** is a web-application designed to display a timeline with customizable scales and time intervals. It dynamically adjusts the **time format** based on user action such as mouse movement and scoll actions.
 
