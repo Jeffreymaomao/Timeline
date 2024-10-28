@@ -126,6 +126,7 @@ class App {
         }
         dateFormat = dateFormat.trim();
         this.timeline.clearEvent();
+        let minDate = null, maxDate = null;
         csvArray.forEach((eventArray)=>{
             if(eventArray.length<2) return;
             const eventDate = parseFormattedDate(eventArray.shift().trim(), dateFormat);
@@ -134,7 +135,24 @@ class App {
                 date: eventDate,
                 title: eventString
             });
+            if (!minDate || eventDate < minDate) {
+                minDate = eventDate;
+            }
+            if (!maxDate || eventDate > maxDate) {
+                maxDate = eventDate;
+            }
         });
+        console.log(maxDate);
+        if (minDate && maxDate) {
+            setTimeout(()=>{
+                const startDate = new Date(minDate);
+                const endDate = new Date(maxDate)
+                const deltaDate = Math.abs(endDate-startDate);
+                this.timeline.range.start.date = new Date(minDate.getTime()-deltaDate*0.2);
+                this.timeline.range.end.date = new Date(maxDate.getTime()+deltaDate*0.2);
+            }, 100);
+        }
+        this.timeline.calculateGridInformation();
         this.timeline.draw();
 
     }
