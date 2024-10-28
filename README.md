@@ -34,3 +34,25 @@ Here is the example for `events` parameters:
 ## License
 
 **Timeline** is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+
+---
+
+## Application
+
+### <img src='https://info.arxiv.org/brand/images/brand-logomark-primary-large.jpg' height='50px'> arXiv - visualization of search results
+
+In arXiv, you can search pager by [![](https://img.shields.io/badge/arXiv-search-red.svg)](https://arxiv.org/search) or  [![](https://img.shields.io/badge/arXiv-advance search-red.svg)](https://arxiv.org/search), then in the result page, you can display the result in timeline. Copy following script in the results page, it will open a window to show the results on the current arXiv page in timeline.
+
+```js
+let timelineURL = 'https://jeffreymaomao.github.io/Timeline/?check_overlap=true&sep=|&events=dd_MMMM_yyyy';
+const events = [...document.querySelectorAll('.arxiv-result')].map(arxivResult=>{
+    const titleElement = arxivResult.querySelector('.title');
+    const dateElement = [...arxivResult.querySelectorAll("*")].find(e=>e.innerText.includes('Submitted'));
+    if (!titleElement || !dateElement) return null;
+    const title = titleElement.innerText.replace(/\n/g,'').trim();
+    const dateString = dateElement.innerText.split(';')[0].split('Submitted')[1].trim().replace(/[, ]+/g, '_');
+    return `${dateString}, ${title}`;
+}).filter(Boolean);
+timelineURL += `|${events.join('|')}`;
+window.open(timelineURL)
+```
