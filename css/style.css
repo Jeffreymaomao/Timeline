@@ -69,6 +69,11 @@ body.dark .marker {
     background-color: rgba(200,50,70,0.9);
 }
 
+.marker a {
+    color: floralwhite;
+    text-decoration: none;
+}
+
 /** -------
  * Control Panel
  *  ------- */

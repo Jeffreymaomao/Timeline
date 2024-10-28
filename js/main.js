@@ -145,7 +145,7 @@ class App {
         if (minDate && maxDate) {
             const startDate = new Date(minDate);
             const endDate = new Date(maxDate)
-            const deltaDate = Math.abs(endDate-startDate);
+            let deltaDate = Math.abs(endDate-startDate) || 1000;
             this.timeline.range.start.date = new Date(minDate.getTime()-deltaDate*0.2);
             this.timeline.range.end.date = new Date(maxDate.getTime()+deltaDate*0.2);
         }

@@ -595,10 +595,10 @@ Timeline.prototype.addEvent = function(event) {
     const eventId = event.id || hash(eventDate, 'uuid');
     const eventTitle = event.title || '';
     const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.event", {
-        innerText: eventTitle,
         id: eventId,
         style: 'position: absolute'
     });
+    markerDOM.innerHTML = eventTitle;
 
     this.events[eventId] = event;
     this.marker.events[eventId] = {
