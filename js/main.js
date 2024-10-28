@@ -142,15 +142,12 @@ class App {
                 maxDate = eventDate;
             }
         });
-        console.log(maxDate);
         if (minDate && maxDate) {
-            setTimeout(()=>{
-                const startDate = new Date(minDate);
-                const endDate = new Date(maxDate)
-                const deltaDate = Math.abs(endDate-startDate);
-                this.timeline.range.start.date = new Date(minDate.getTime()-deltaDate*0.2);
-                this.timeline.range.end.date = new Date(maxDate.getTime()+deltaDate*0.2);
-            }, 100);
+            const startDate = new Date(minDate);
+            const endDate = new Date(maxDate)
+            const deltaDate = Math.abs(endDate-startDate);
+            this.timeline.range.start.date = new Date(minDate.getTime()-deltaDate*0.2);
+            this.timeline.range.end.date = new Date(maxDate.getTime()+deltaDate*0.2);
         }
         this.timeline.calculateGridInformation();
         this.timeline.draw();
