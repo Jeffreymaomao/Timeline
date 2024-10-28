@@ -737,7 +737,17 @@ Timeline.prototype.addBrandMarker = function(){
     const brandDev = createAndAppendDOM(brandContainer, 'div', {
         class: 'brand-author',
         innerText: 'Chang-Mao'
+    });
+
+    fetch('last-updated.txt')
+    .then(response => response.text())
+    .then(text => {
+        const lastUpdate = text.split('Last deployed:')[1].trim();
+        const lastUpdateDate = lastUpdate.split(' ')[0]
+        brandDev.innerText = `Chang-Mao ${lastUpdateDate}`;
+        brandContainer.title = `Last update: ${lastUpdate}`;
     })
+    .catch(error => console.error('Failed to load deploy time:', error));
 }
 
 export { Timeline };
