@@ -47,7 +47,7 @@ class Timeline {
             background: 'rgba(255,255,255,1.0)',
             mouse: 'rgba(0,0,200,0.8)',
             now: 'rgba(200,0,0,0.8)',
-            event: 'rgba(200,0,0,0.8)',
+            event: 'rgba(200,50,50,0.8)',
             label: '#222',
             mainAxis: '#333',
             subAxis: '#333',
@@ -90,11 +90,10 @@ class Timeline {
         this.onScreenMarker = [];
 
         // ---
-
         this.range.start.date.setHours(this.range.start.date.getHours() - 12);
         this.range.end.date.setHours(this.range.end.date.getHours() + 12);
-
         this.calculateGridInformation();
+
         this.initializeDOM(config.parentDOM || document.body);
         if(this.fps >= 60) {
             this.loop();
@@ -640,11 +639,11 @@ Timeline.prototype.drawEvents = function() {
                 const onScreenEventBound = onScreenEvent.bound;
                 if(is2BoundsOverlapping(bound, onScreenEventBound)){
                     y -= onScreenEventBound.height + heightGap;
-                    if(y<0){
-                        // out off screen
-                        if(y<=0) this.marker.events[eventId].dom.style.display = "none";
-                        return;
-                    }
+                    // if(y<0){
+                    //     // out off screen
+                    //     if(y<=0) this.marker.events[eventId].dom.style.display = "none";
+                    //     return;
+                    // }
                     eventDOM.style.top = `${y}px`; // real sreen position y
                     bound = eventDOM.getBoundingClientRect();
                 }
