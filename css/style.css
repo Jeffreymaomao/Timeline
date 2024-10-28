@@ -59,8 +59,9 @@ body.is-iframe .content {
     border-radius: 5px;
     min-width: 30px;
     min-height: 28px;
+    max-width: 500px;
     color: floralwhite;
-    background-color: rgba(200,0,0,0.9);
+    background-color: rgba(200,50,50,0.8);
 }
 
 body.dark .marker {
