@@ -147,7 +147,7 @@ function formatDate(date, format, utc) {
     return format;
 };
 
-function parseFormattedDate(dateString, format) {
+function _parseFormattedDate(dateString, format) {
     const now = new Date(); // Get current date/time for fallback values
     const formatParts = format.match(/(yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|fff|ff|f|TT|T|tt|t|K)/g);
     const dateParts = dateString.match(/\d{1,4}|AM|PM|Z|[-+]\d{2}:\d{2}/gi);
@@ -217,6 +217,240 @@ function parseFormattedDate(dateString, format) {
     const date = new Date(year, month, day, hours, minutes, seconds, milliseconds);
     if (timezoneOffset !== now.getTimezoneOffset()) {
         return new Date(date.getTime() - timezoneOffset * 60 * 1000);
+    }
+    return date;
+}
+
+function parseFormattedDate(dateString, format) {
+    const MMMM = ["\x00", "January", "February", "March", "April", "May", "June", "July",
+                  "August", "September", "October", "November", "December"];
+    const MMM = ["\x01", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dddd = ["\x02", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const ddd = ["\x03", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    // Function to escape regex special characters
+    function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Parse the format string into tokens
+    function parseFormatString(format) {
+        const tokens = [];
+        let i = 0;
+        const len = format.length;
+        const formatSpecifiers = [
+            'yyyy', 'yy', 'y',
+            'MMMM', 'MMM', 'MM', 'M',
+            'dddd', 'ddd',
+            'dd', 'd',
+            'HH', 'H',
+            'hh', 'h',
+            'mm', 'm',
+            'ss', 's',
+            'fff', 'ff', 'f',
+            'TT', 'T',
+            'tt', 't',
+            'K'
+        ];
+
+        while (i < len) {
+            const c = format[i];
+            if (c === '\\') {
+                // Escaped character
+                if (i + 1 < len) {
+                    tokens.push({ type: 'literal', value: format[i + 1] });
+                    i += 2;
+                } else {
+                    tokens.push({ type: 'literal', value: '\\' });
+                    i++;
+                }
+            } else {
+                // Check if any format specifier matches at this position
+                let matched = false;
+                // Prioritize longer specifiers first
+                const sortedSpecifiers = formatSpecifiers.sort((a, b) => b.length - a.length);
+                for (const specifier of sortedSpecifiers) {
+                    if (format.startsWith(specifier, i)) {
+                        tokens.push({ type: 'specifier', value: specifier });
+                        i += specifier.length;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    tokens.push({ type: 'literal', value: c });
+                    i++;
+                }
+            }
+        }
+        return tokens;
+    }
+
+    // Build the regex pattern from tokens
+    function buildRegexPattern(tokens) {
+        function getSpecifierPattern(specifier) {
+            const patterns = {
+                'yyyy': '(?<year>\\d{4})',
+                'yy': '(?<year>\\d{2})',
+                'y': '(?<year>\\d{1,4})',
+                'MMMM': '(?<monthName>[A-Za-z]+)',
+                'MMM': '(?<monthName>[A-Za-z]+)',
+                'MM': '(?<month>\\d{2})',
+                'M': '(?<month>\\d{1,2})',
+                'dddd': '(?<dayName>[A-Za-z]+)',
+                'ddd': '(?<dayName>[A-Za-z]+)',
+                'dd': '(?<day>\\d{2})',
+                'd': '(?<day>\\d{1,2})',
+                'HH': '(?<hours24>\\d{2})',
+                'H': '(?<hours24>\\d{1,2})',
+                'hh': '(?<hours12>\\d{2})',
+                'h': '(?<hours12>\\d{1,2})',
+                'mm': '(?<minutes>\\d{2})',
+                'm': '(?<minutes>\\d{1,2})',
+                'ss': '(?<seconds>\\d{2})',
+                's': '(?<seconds>\\d{1,2})',
+                'fff': '(?<milliseconds>\\d{3})',
+                'ff': '(?<milliseconds>\\d{2})',
+                'f': '(?<milliseconds>\\d{1})',
+                'TT': '(?<AMPM>AM|PM)',
+                'T': '(?<AMPM>A|P)',
+                'tt': '(?<ampm>am|pm)',
+                't': '(?<ampm>a|p)',
+                'K': '(?<timezone>Z|[+-]\\d{2}:\\d{2})'
+            };
+            return patterns[specifier];
+        }
+
+        let pattern = '^';
+        for (const token of tokens) {
+            if (token.type === 'literal') {
+                pattern += escapeRegExp(token.value);
+            } else if (token.type === 'specifier') {
+                const specPattern = getSpecifierPattern(token.value);
+                if (specPattern) {
+                    pattern += specPattern;
+                } else {
+                    pattern += escapeRegExp(token.value);
+                }
+            }
+        }
+        pattern += '$';
+        return pattern;
+    }
+
+    const tokens = parseFormatString(format);
+    const pattern = buildRegexPattern(tokens);
+
+    // Debug: Uncomment to see the generated regex
+    // console.log("Generated Regex:", pattern);
+
+    let regex;
+    try {
+        regex = new RegExp(pattern, 'i'); // 'i' for case-insensitive matching
+    } catch (e) {
+        console.error(`Invalid regex pattern: ${pattern}`);
+        return null;
+    }
+
+    const match = regex.exec(dateString);
+    if (!match) {
+        // Date string does not match the format
+        return null;
+    }
+    const groups = match.groups;
+
+    // Initialize date components with default values
+    let year = 0,
+        month = 0,
+        day = 1,
+        hours = 0,
+        minutes = 0,
+        seconds = 0,
+        milliseconds = 0;
+    let isPM = false;
+
+    if (groups.year) {
+        year = parseInt(groups.year, 10);
+        if (groups.year.length === 2) {
+            if (year < 50) {
+                year += 2000;
+            } else {
+                year += 1900;
+            }
+        }
+    }
+    if (groups.month) {
+        month = parseInt(groups.month, 10) - 1;
+    }
+    if (groups.monthName) {
+        const monthName = groups.monthName;
+        let m = MMMM.indexOf(monthName);
+        if (m === -1) {
+            m = MMM.indexOf(monthName);
+        }
+        if (m !== -1) {
+            month = m - 1;
+        } else {
+            return null;
+        }
+    }
+    if (groups.day) {
+        day = parseInt(groups.day, 10);
+    }
+    if (groups.hours24 !== undefined) {
+        hours = parseInt(groups.hours24, 10);
+    }
+    if (groups.hours12 !== undefined) {
+        hours = parseInt(groups.hours12, 10);
+    }
+    if (groups.minutes) {
+        minutes = parseInt(groups.minutes, 10);
+    }
+    if (groups.seconds) {
+        seconds = parseInt(groups.seconds, 10);
+    }
+    if (groups.milliseconds) {
+        const len = groups.milliseconds.length;
+        milliseconds = parseInt(groups.milliseconds, 10) * Math.pow(10, 3 - len);
+    }
+    if (groups.AMPM) {
+        isPM = /P/i.test(groups.AMPM);
+    }
+    if (groups.ampm) {
+        isPM = /p/i.test(groups.ampm);
+    }
+    if (groups.dayName) {
+        // Optional validation can be added here
+    }
+    // Adjust hours for AM/PM
+    if (groups.hours12 !== undefined) {
+        if (isPM && hours < 12) {
+            hours += 12;
+        } else if (!isPM && hours === 12) {
+            hours = 0;
+        }
+    }
+    // Handle timezone offset
+    let date;
+    if (groups.timezone) {
+        const timezone = groups.timezone;
+        if (timezone.toUpperCase() === 'Z') {
+            date = new Date(Date.UTC(year, month, day, hours, minutes, seconds, milliseconds));
+        } else {
+            const matchTz = /([+-])(\d{2}):(\d{2})/.exec(timezone);
+            if (matchTz) {
+                const sign = matchTz[1] === '+' ? 1 : -1;
+                const tzHours = parseInt(matchTz[2], 10);
+                const tzMinutes = parseInt(matchTz[3], 10);
+                const tzOffset = sign * (tzHours * 60 + tzMinutes);
+                date = new Date(Date.UTC(year, month, day, hours, minutes, seconds, milliseconds) - tzOffset * 60 * 1000);
+            } else {
+                return null;
+            }
+        }
+    } else {
+        date = new Date(year, month, day, hours, minutes, seconds, milliseconds);
     }
     return date;
 }
