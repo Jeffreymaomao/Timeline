@@ -1,0 +1,25 @@
+name: Update Last Deploy Time
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-deploy-time:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Update last deploy time
+        run: echo "Last deployed: $(date -u +"%Y-%m-%d %H:%M:%S") UTC" > last-updated.txt
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+          git add last-updated.txt
+          git commit -m "Update last deploy time"
+          git push

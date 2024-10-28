@@ -127,6 +127,7 @@ class Timeline {
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', changeToDarkLightMode.bind(this), false);
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', changeToDarkLightMode.bind(this), false);
         this.initControlPanel();
+        this.addBrandMarker();
     }
 
     initControlPanel() {
@@ -723,6 +724,20 @@ Timeline.prototype.drawPositionMarker = function (positionX) {
     this.ctx.arc(positionX, this.axisY-height, radius*0.5, 0, Math.PI*2);
     this.ctx.fill();
     this.ctx.closePath();
+}
+
+Timeline.prototype.addBrandMarker = function(){
+    const brandContainer = createAndAppendDOM(this.dom.parentDOM, 'div', {
+        class: 'brand-container'
+    });
+    const brandName = createAndAppendDOM(brandContainer, 'div', {
+        class: 'brand-name',
+        innerText: 'Timeline'
+    });
+    const brandDev = createAndAppendDOM(brandContainer, 'div', {
+        class: 'brand-author',
+        innerText: 'Chang-Mao'
+    })
 }
 
 export { Timeline };

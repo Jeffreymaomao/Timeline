@@ -102,5 +102,37 @@ body.dark .control-panel label{
     color: #bbb;
 }
 
+/** -------
+ * Brand
+ *  ------- */
 
+.brand-container {
+    display: block !important;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 1vh;
+    padding: 5px 20px;
+    border-radius: 10px;
+    background-color: rgba(220, 220, 220, 0.5);
 
+    -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+}
+
+.brand-container .brand-name {
+    color: rgba(150,150,150,1.0);
+    font-size: max(4vh, 20px);
+    padding: 0;
+    margin: 0;
+}
+
+.brand-container .brand-author {
+    font-size: max(1.5vh, 10px);
+    color: rgba(150,150,150,1.0);
+    text-align: right;
+    padding: 0;
+    margin: 0;
+    margin-top: -5px;
+}
