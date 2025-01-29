@@ -31,15 +31,16 @@ window.addEventListener("load", () => {
     window.app = app;
     const example = windowParams.get('example');
     if(example==='1') {
-        randomTest(app);
-    } else if (example==='2') {
         fileTest(app);
+    } else {
+        const num = parseInt(example) || 20;
+        randomTest(app, num);
     }
 });
 
-const randomTest = (app)=>{
+const randomTest = (app, num=20)=>{
     app.timeline.clearEvent();
-    for(let i=0;i<20;i++){
+    for(let i=0;i<num;i++){
         const deltaHour = (2.0*Math.random()-1)*1.5;
         const eventDate = new Date(new Date().getTime()+ 1000*60*60*deltaHour);
         eventDate.setMilliseconds(0);
@@ -49,7 +50,7 @@ const randomTest = (app)=>{
 }
 
 const fileTest = (app)=>{
-    let file_content = "hh:mm\n";
+    let file_content = "HH:mm\n";
     for (let i = 0; i <= 23; i++) {
       let hour = i.toString().padStart(2, "0");
       file_content += `${hour}:00, ${hour}:00 event!\n`;
