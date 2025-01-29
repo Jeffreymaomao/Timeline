@@ -7,7 +7,12 @@ window.addEventListener("load", () => {
     }
     const windowParams = new URLSearchParams(window.location.search);
     // ---
-    const isUserCheckOverlap = `${windowParams.get('check_overlap')}`.toLowerCase() === 'true'
+    const isUserCheckOverlap = 
+        `${windowParams.get('check_overlap')}`.toLowerCase() === 'true' 
+        ||
+        `${windowParams.get('checkOverlap')}`.toLowerCase() === 'true' 
+        ||
+        `${windowParams.get('check')}`.toLowerCase() === 'true';
     const fps = Number(windowParams.get('fps')) || 10;
     const app = new App({
         parentDOM: document.body,
@@ -24,6 +29,12 @@ window.addEventListener("load", () => {
         app.loadFile(eventLogFile);
     }
     window.app = app;
+    const example = windowParams.get('example');
+    if(example==='1') {
+        randomTest(app);
+    } else if (example==='2') {
+        fileTest(app);
+    }
 });
 
 const randomTest = (app)=>{
@@ -41,7 +52,7 @@ const fileTest = (app)=>{
     let file_content = "hh:mm\n";
     for (let i = 0; i <= 23; i++) {
       let hour = i.toString().padStart(2, "0");
-      file_content += `${hour}:00, This is for ${hour}:00 test!\n`;
+      file_content += `${hour}:00, ${hour}:00 event!\n`;
     }
     app.loadFile(file_content);
 }
@@ -156,10 +167,10 @@ class App {
 
     changeDarkLightMode() {
         this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    	if(this.isDarkMode){
+        if(this.isDarkMode){
             this.dom.parentDOM.classList.add("dark");
         } else {
-        	this.dom.parentDOM.classList.remove("dark");	
+            this.dom.parentDOM.classList.remove("dark");
         }
     }
 }

@@ -361,13 +361,14 @@ function parseFormattedDate(dateString, format) {
     const groups = match.groups;
 
     // Initialize date components with default values
-    let year = 0,
-        month = 0,
-        day = 1,
-        hours = 0,
-        minutes = 0,
-        seconds = 0,
-        milliseconds = 0;
+    const today = new Date();
+    let year         = today.getFullYear(),
+        month        = today.getMonth(),
+        day          = today.getDate(),
+        hours        = today.getHours(),
+        minutes      = today.getMinutes(),
+        seconds      = today.getSeconds(),
+        milliseconds = today.getMilliseconds();
     let isPM = false;
 
     if (groups.year) {

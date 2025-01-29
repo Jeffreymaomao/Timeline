@@ -727,7 +727,9 @@ Timeline.prototype.drawPositionMarker = function (positionX) {
 }
 
 Timeline.prototype.addBrandMarker = function(){
-    const brandContainer = createAndAppendDOM(this.dom.parentDOM, 'div', {
+    const brandContainer = createAndAppendDOM(this.dom.parentDOM, 'a', {
+        href: 'https://github.com/Jeffreymaomao/Timeline',
+        target: '_blank',
         class: 'brand-container'
     });
     const brandName = createAndAppendDOM(brandContainer, 'div', {
