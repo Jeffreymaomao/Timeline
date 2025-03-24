@@ -32,7 +32,7 @@ window.addEventListener("load", () => {
     const example = windowParams.get('example');
     if(example==='1') {
         fileTest(app);
-    } else {
+    } else if (example) {
         const num = parseInt(example) || 20;
         randomTest(app, num);
     }
