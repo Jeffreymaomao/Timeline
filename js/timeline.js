@@ -41,8 +41,9 @@ class Timeline {
             min: 1000, // 1 second in ms
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
+        this.range.start.date.setHours(this.range.start.date.getHours() - 12);
+        this.range.end.date.setHours(this.range.end.date.getHours() + 12);
         // ---
-
         this.colorWhite = {
             background: 'rgba(255,255,255,1.0)',
             mouse: 'rgba(0,0,200,0.8)',
@@ -92,8 +93,6 @@ class Timeline {
         this.onScreenMarker = [];
 
         // ---
-        this.range.start.date.setHours(this.range.start.date.getHours() - 12);
-        this.range.end.date.setHours(this.range.end.date.getHours() + 12);
         this.calculateGridInformation();
 
         this.initializeDOM(config.parentDOM || document.body);
