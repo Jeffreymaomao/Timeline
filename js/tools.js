@@ -287,56 +287,76 @@ function parseFormattedDate(dateString, format) {
         return tokens;
     }
 
+    function getSpecifierPattern(specifier) {
+        const patterns = {
+            'yyyy': '(?<year>\\d{4})',
+            'yy': '(?<year>\\d{2})',
+            'y': '(?<year>\\d{1,4})',
+            'MMMM': '(?<monthName>[A-Za-z]+)',
+            'MMM': '(?<monthName>[A-Za-z]+)',
+            'MM': '(?<month>\\d{2})',
+            'M': '(?<month>\\d{1,2})',
+            'dddd': '(?<dayName>[A-Za-z]+)',
+            'ddd': '(?<dayName>[A-Za-z]+)',
+            'dd': '(?<day>\\d{2})',
+            'd': '(?<day>\\d{1,2})',
+            'HH': '(?<hours24>\\d{2})',
+            'H': '(?<hours24>\\d{1,2})',
+            'hh': '(?<hours12>\\d{2})',
+            'h': '(?<hours12>\\d{1,2})',
+            'mm': '(?<minutes>\\d{2})',
+            'm': '(?<minutes>\\d{1,2})',
+            'ss': '(?<seconds>\\d{2})',
+            's': '(?<seconds>\\d{1,2})',
+            'fff': '(?<milliseconds>\\d{3})',
+            'ff': '(?<milliseconds>\\d{2})',
+            'f': '(?<milliseconds>\\d{1})',
+            'TT': '(?<AMPM>AM|PM)',
+            'T': '(?<AMPM>A|P)',
+            'tt': '(?<ampm>am|pm)',
+            't': '(?<ampm>a|p)',
+            'K': '(?<timezone>Z|[+-]\\d{2}:\\d{2})'
+        };
+        return patterns[specifier];
+    }
+
     // Build the regex pattern from tokens
     function buildRegexPattern(tokens) {
-        function getSpecifierPattern(specifier) {
-            const patterns = {
-                'yyyy': '(?<year>\\d{4})',
-                'yy': '(?<year>\\d{2})',
-                'y': '(?<year>\\d{1,4})',
-                'MMMM': '(?<monthName>[A-Za-z]+)',
-                'MMM': '(?<monthName>[A-Za-z]+)',
-                'MM': '(?<month>\\d{2})',
-                'M': '(?<month>\\d{1,2})',
-                'dddd': '(?<dayName>[A-Za-z]+)',
-                'ddd': '(?<dayName>[A-Za-z]+)',
-                'dd': '(?<day>\\d{2})',
-                'd': '(?<day>\\d{1,2})',
-                'HH': '(?<hours24>\\d{2})',
-                'H': '(?<hours24>\\d{1,2})',
-                'hh': '(?<hours12>\\d{2})',
-                'h': '(?<hours12>\\d{1,2})',
-                'mm': '(?<minutes>\\d{2})',
-                'm': '(?<minutes>\\d{1,2})',
-                'ss': '(?<seconds>\\d{2})',
-                's': '(?<seconds>\\d{1,2})',
-                'fff': '(?<milliseconds>\\d{3})',
-                'ff': '(?<milliseconds>\\d{2})',
-                'f': '(?<milliseconds>\\d{1})',
-                'TT': '(?<AMPM>AM|PM)',
-                'T': '(?<AMPM>A|P)',
-                'tt': '(?<ampm>am|pm)',
-                't': '(?<ampm>a|p)',
-                'K': '(?<timezone>Z|[+-]\\d{2}:\\d{2})'
-            };
-            return patterns[specifier];
-        }
+        const patternParts = [];
+        const optionalStack = [];
 
-        let pattern = '^';
         for (const token of tokens) {
+            if (token.value === '[') {
+                optionalStack.push([]);
+                continue;
+            }
+            if (token.value === ']') {
+                const optionalGroup = optionalStack.pop().join('');
+                const wrapped = `(?:${optionalGroup})?`;
+                if (optionalStack.length > 0) {
+                    optionalStack[optionalStack.length - 1].push(wrapped);
+                } else {
+                    patternParts.push(wrapped);
+                }
+                continue;
+            }
+
+            let part = '';
             if (token.type === 'literal') {
-                pattern += escapeRegExp(token.value);
+                part = escapeRegExp(token.value);
             } else if (token.type === 'specifier') {
                 const specPattern = getSpecifierPattern(token.value);
-                if (specPattern) {
-                    pattern += specPattern;
-                } else {
-                    pattern += escapeRegExp(token.value);
-                }
+                part = specPattern || escapeRegExp(token.value);
+            }
+
+            if (optionalStack.length > 0) {
+                optionalStack[optionalStack.length - 1].push(part);
+            } else {
+                patternParts.push(part);
             }
         }
-        pattern += '$';
-        return pattern;
+
+        return '^' + patternParts.join('') + '$';
     }
 
     const tokens = parseFormatString(format);
