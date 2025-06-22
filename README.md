@@ -37,6 +37,38 @@ Here is the example for `events` parameters:
 - `hh:mm|12:00,event 1|13:30,event 2|16:45,event 2`
 - `yyyy_MM_dd_hh:mm|2013_10_10_12:00,event 2|2014_10_10_12:00,event 2`
 
+### Supported Time Format
+
+| Format | Meaning                     | Example Input  |
+| ------ | --------------------------- | -------------- |
+| `yyyy` | Four-digit year             | `2025`         |
+| `yy`   | Two-digit year (00–99)      | `25` → `2025`  |
+| `y`    | One to four-digit year      | `5`, `2023`    |
+| `MMMM` | Full month name             | `January`      |
+| `MMM`  | Abbreviated month name      | `Jan`          |
+| `MM`   | Two-digit month (01–12)     | `03`           |
+| `M`    | One or two-digit month      | `3`, `12`      |
+| `dddd` | Full weekday name           | `Monday`       |
+| `ddd`  | Abbreviated weekday name    | `Mon`          |
+| `dd`   | Two-digit day (01–31)       | `09`           |
+| `d`    | One or two-digit day        | `9`, `31`      |
+| `HH`   | 24-hour format (two digits) | `08`, `18`     |
+| `H`    | 24-hour format (1–2 digits) | `8`, `18`      |
+| `hh`   | 12-hour format (two digits) | `03`, `11`     |
+| `h`    | 12-hour format (1–2 digits) | `3`, `11`      |
+| `mm`   | Minutes (two digits)        | `07`, `59`     |
+| `m`    | Minutes (1–2 digits)        | `7`, `59`      |
+| `ss`   | Seconds (two digits)        | `09`, `45`     |
+| `s`    | Seconds (1–2 digits)        | `9`, `45`      |
+| `fff`  | Milliseconds (three digits) | `001`, `123`   |
+| `ff`   | Milliseconds (two digits)   | `12` → `120ms` |
+| `f`    | Milliseconds (one digit)    | `1` → `100ms`  |
+| `TT`   | `AM` or `PM`                | `AM`           |
+| `T`    | `A` or `P`                  | `P`            |
+| `tt`   | `am` or `pm`                | `pm`           |
+| `t`    | `a` or `p`                  | `a`            |
+| `K`    | Timezone (`Z` or ±hh:mm)    | `Z`, `+08:00`  |
+
 ## License
 
 **Timeline** is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
