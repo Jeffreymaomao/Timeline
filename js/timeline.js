@@ -30,20 +30,23 @@ class Timeline {
         this.state = this.getHistoryState();
         this.range = {
             start: {
-                date: new Date(this.state.start) || new Date(),
+                date: this.state.start ? new Date(this.state.start) : new Date(),
                 time: null
             },
             end: {
-                date: new Date(this.state.end) || new Date(),
+                date: this.state.end ? new Date(this.state.end) : new Date(),
                 time: null
             },
             duration: null,
             min: 1000, // 1 second in ms
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
+
         window.addEventListener('beforeunload', this.saveHistoryState.bind(this), false);
-        this.range.start.date.setHours(this.range.start.date.getHours() - 12);
-        this.range.end.date.setHours(this.range.end.date.getHours() + 12);
+        if(!this.state.start || !this.state.end){
+            this.range.start.date.setHours(this.range.start.date.getHours() - 12);
+            this.range.end.date.setHours(this.range.end.date.getHours() + 12);
+        }
         // ---
         this.colorWhite = {
             background: 'rgba(255,255,255,1.0)',
@@ -107,7 +110,12 @@ class Timeline {
     }
 
     saveHistoryState() {
+        if(this.isNeedClearHistoryState) return;
         window.localStorage.setItem('timeline-state', JSON.stringify(this.getCurrentState()));
+    }
+
+    clearHistoryState() {
+        window.localStorage.removeItem('timeline-state');
     }
 
     getHistoryState() {
@@ -347,6 +355,14 @@ class Timeline {
             this.resizeCanvas();
             // this.draw();
             window.requestAnimationFrame(this.draw.bind(this));
+        }.bind(this), false);
+
+        window.addEventListener("keydown", function(e) {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            if ((isMac ? e.metaKey : e.ctrlKey) && e.shiftKey && e.key === 'r') {
+                this.clearHistoryState();
+                this.isNeedClearHistoryState = true;
+            }
         }.bind(this), false);
 
         eventParent.addEventListener('mousemove', function(e) {
