@@ -92,6 +92,11 @@ class App {
         // ---
         this.dom.topBar = createAndAppendDOM(this.dom.header, "div.top-bar");
         this.dom.content = createAndAppendDOM(this.dom.main, "div.content");
+        // ---
+        this.dom.input = createAndAppendDOM(this.dom.main, "input", {
+            type: 'file',
+            style: 'display:none'
+        });
 
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.changeDarkLightMode.bind(this), false);
         if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', this.changeDarkLightMode.bind(this), false);
@@ -122,6 +127,16 @@ class App {
         });
         dropZone.addEventListener('drop', handleDrop, false);
 
+        this.dom.input.addEventListener('change', handleDrop, false);
+
+        window.addEventListener('keydown', (e) => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'o') {
+                e.preventDefault();
+                this.dom.input.click();
+            }
+        });
+
         function readFileContent(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -136,7 +151,7 @@ class App {
         }
         const loadFile = this.loadFile.bind(this);
         function handleDrop(e) {
-            let dt = e.dataTransfer;
+            let dt = e.dataTransfer || e.target;
             let file = dt.files[0]; // only process first one
             document.title = `Timeline - ${file.name}`
             readFileContent(file).then(content => {
