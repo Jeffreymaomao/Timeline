@@ -111,7 +111,7 @@ class Timeline {
     }
 
     getHistoryState() {
-        return JSON.parse(window.localStorage.getItem('timeline-state'));
+        return JSON.parse(window.localStorage.getItem('timeline-state')) || {};
     }
 
     getCurrentState() {
