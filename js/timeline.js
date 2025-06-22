@@ -613,7 +613,7 @@ Timeline.prototype.addRangeEvent = function(event) {
     const eventTitle = event.title || '';
     const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.range-event", {
         id: eventId,
-        style: 'position: absolute'
+        style: 'position: absolute;'+ (event.color ? `background-color:${event.color}` : '')
     });
     markerDOM.innerHTML = eventTitle;
 
@@ -686,16 +686,16 @@ Timeline.prototype.drawEvents = function() {
         // draw line
         // since y is px from top
         const eventPositionY = this.axisY/this.resolution - y - bound.height;
-        this.drawEventReceptacleLine(eventPositionX, eventPositionY, isEndTimeExist);
+        this.drawEventReceptacleLine(eventPositionX, eventPositionY, isEndTimeExist, event.color);
         if(isEndTimeExist) {
-            this.drawEventLine(eventPositionX, eventEndPositionX, eventPositionY);
+            this.drawEventLine(eventPositionX, eventEndPositionX, eventPositionY, event.color);
         }
     });
 }
 
-Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHeight=100) {
+Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHeight=100, userColor) {
     // This function will draw the line from axis to (x,y)
-    const color = this.color.rangeEvent;
+    const color = userColor || this.color.rangeEvent;
     const lineWidth = 1.2 * this.resolution;
     const height = defaultHeight * this.resolution;
     const triangleHeight = 10 * this.resolution;
@@ -730,9 +730,9 @@ Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHei
     this.ctx.closePath();
 }
 
-Timeline.prototype.drawEventReceptacleLine = function (positionX, defaultHeight=100, isEndTimeExist) {
+Timeline.prototype.drawEventReceptacleLine = function (positionX, defaultHeight=100, isEndTimeExist, userColor) {
     // This function will draw the line from axis to (x,y)
-    const color = isEndTimeExist ? this.color.rangeEvent : this.color.event;
+    const color = userColor || (isEndTimeExist ? this.color.rangeEvent : this.color.event);
     const lineWidth = 1.2 * this.resolution;
     const height = defaultHeight * this.resolution;
     const triangleHeight = 10 * this.resolution;

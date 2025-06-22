@@ -176,6 +176,22 @@ class App {
 
             const first = eventArray.shift().trim();
             const second = eventArray.shift().trim();
+
+            let color = undefined;
+            let last = '';
+            if(eventArray.length > 1) {
+                for(let i = eventArray.length-1; i>=0; i--) {
+                    const last = eventArray.slice(i).join(',')
+                    color = last.trim();
+                    if(color.startsWith('color=') || color.startsWith('c=')) {
+                        color = color.replace('c=','').replace('color=','');
+                        eventArray = eventArray.slice(0, i);
+                        break;
+                    } else {
+                        color = undefined; // not a color
+                    }
+                }
+            }
             const rest = eventArray.join(',');
 
             const date1 = parseFormattedDate(first, dateFormat);
@@ -184,7 +200,8 @@ class App {
             if (isNaN(maybeDate2) || !maybeDate2 || !rest) {
                 this.timeline.addEvent({
                     date: date1,
-                    title: (rest ? ([second, rest].join(',').trim()) : second)
+                    title: (rest ? ([second, rest].join(',').trim()) : second),
+                    color: color
                 });
                 if (!minDate || date1 < minDate) minDate = date1;
                 if (!maxDate || date1 > maxDate) maxDate = date1;
@@ -192,7 +209,8 @@ class App {
                 this.timeline.addRangeEvent({
                     date: date1,
                     end: maybeDate2,
-                    title: rest
+                    title: rest,
+                    color: color
                 });
 
                 if (!minDate || date1 < minDate) minDate = date1;
