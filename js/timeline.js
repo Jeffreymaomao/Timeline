@@ -48,6 +48,7 @@ class Timeline {
             mouse: 'rgba(0,0,200,0.8)',
             now: 'rgba(200,0,0,0.8)',
             event: 'rgba(200,50,50,0.8)',
+            rangeEvent: 'rgba(50,100,180,0.8)',
             label: '#222',
             mainAxis: '#333',
             subAxis: '#333',
@@ -59,6 +60,7 @@ class Timeline {
             mouse: 'rgba(100,200,255,0.9)',
             now: 'rgba(250,30,100,0.8)',
             event: 'rgba(200,50,70,0.8)',
+            rangeEvent: 'rgba(50,100,180,0.8)',
             label: '#fff',
             mainAxis: '#eee',
             subAxis: '#eee',
@@ -119,7 +121,6 @@ class Timeline {
             if(this.isDarkMode){
                 this.color = this.colorDark;
             } else{
-                console.log(this.colorWhite);
                 this.color = this.colorWhite;
             }
             window.requestAnimationFrame(this.draw.bind(this));
@@ -604,7 +605,28 @@ Timeline.prototype.addEvent = function(event) {
     this.marker.events[eventId] = {
         dom: markerDOM,
     };
+}
 
+Timeline.prototype.addRangeEvent = function(event) {
+    if(!this.events) this.events = {};
+    if(!this.marker.events) this.marker.events = {};
+    if(!event.date) return;
+    if(!event.end) return;
+
+    const eventDate = event.date;
+    const eventEnd = event.end;
+    const eventId = event.id || hash(eventDate, 'uuid');
+    const eventTitle = event.title || '';
+    const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.range-event", {
+        id: eventId,
+        style: 'position: absolute'
+    });
+    markerDOM.innerHTML = eventTitle;
+
+    this.events[eventId] = event;
+    this.marker.events[eventId] = {
+        dom: markerDOM,
+    };
 }
 
 Timeline.prototype.drawEvents = function() {
@@ -617,6 +639,8 @@ Timeline.prototype.drawEvents = function() {
     Object.keys(this.events).forEach((eventId)=>{
         const event = this.events[eventId];
         const eventTime = event.date.getTime();
+        const eventEndTime = event.end?.getTime();
+        const isEndTimeExist = Boolean(eventEndTime);
         // ---
         if(eventTime < this.range.start.time || this.range.end.time < eventTime){
             this.marker.events[eventId].dom.style.display = "none";
@@ -625,11 +649,19 @@ Timeline.prototype.drawEvents = function() {
         // ---
         this.marker.events[eventId].dom.style.display = "block";
         const eventPositionX = (eventTime - this.range.start.time) * this.pixelsPerMillisecond;
+        let eventEndPositionX;
+        if(isEndTimeExist) {
+            eventEndPositionX = (eventEndTime - this.range.start.time) * this.pixelsPerMillisecond;
+        }
         // ---
         const eventDOM = this.marker.events[eventId].dom;
         let bound = eventDOM.getBoundingClientRect();
         // ---
-        const x = ( eventPositionX ) / this.resolution - bound.width*0.5;
+        let x = ( eventPositionX ) / this.resolution - bound.width*0.5 - 1;
+        if(isEndTimeExist) { // if end time not exists => center
+            x = 0.5 * ( eventEndPositionX + eventPositionX ) / this.resolution - bound.width*0.5 - 1;
+        }
+
         let y = ( this.axisY ) / this.resolution - defaultHeight - bound.height;
         eventDOM.style.left = `${x}px`; // real sreen position x
         eventDOM.style.top = `${y}px`; // real sreen position y
@@ -660,38 +692,85 @@ Timeline.prototype.drawEvents = function() {
         // draw line
         // since y is px from top
         const eventPositionY = this.axisY/this.resolution - y - bound.height;
-        this.drawEventLine(eventPositionX, eventPositionY);
+        this.drawEventReceptacleLine(eventPositionX, eventPositionY, isEndTimeExist);
+        if(isEndTimeExist) {
+            this.drawEventLine(eventPositionX, eventEndPositionX, eventPositionY);
+        }
     });
 }
 
-Timeline.prototype.drawEventLine = function (positionX, defaultHeight=100) {
-    const color = this.color.event;
+Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHeight=100) {
+    // This function will draw the line from axis to (x,y)
+    const color = this.color.rangeEvent;
     const lineWidth = 1.2 * this.resolution;
     const height = defaultHeight * this.resolution;
     const triangleHeight = 10 * this.resolution;
     const triangleHalfWidth = 8 * this.resolution;
-    const boxBottomPositionY = this.axisY - height - 2; // a little offset
+    const boxBottomPositionY = this.axisY - height; // a little offset
     const radius = 3 * this.resolution;
     this.ctx.strokeStyle = color;
     this.ctx.fillStyle = color;
     this.ctx.lineWidth = lineWidth;
     this.ctx.beginPath();
-    this.ctx.moveTo(positionX, this.axisY);
-    this.ctx.lineTo(positionX, boxBottomPositionY + triangleHeight);
+    this.ctx.moveTo(positionX1, boxBottomPositionY);
+    this.ctx.lineTo(positionX2, boxBottomPositionY);
+    this.ctx.closePath();
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(positionX2, this.axisY);
+    this.ctx.lineTo(positionX2, boxBottomPositionY + triangleHeight);
     this.ctx.quadraticCurveTo(
-        positionX - triangleHalfWidth*0.2,
+        positionX2 - triangleHalfWidth*0.2,
         boxBottomPositionY,
-        positionX - triangleHalfWidth,
-        boxBottomPositionY);
+        positionX2 - triangleHalfWidth,
+        boxBottomPositionY
+    );
+    this.ctx.lineTo(positionX2+1, boxBottomPositionY);
+    this.ctx.stroke();
+    this.ctx.fill();
+
+    this.ctx.beginPath();
+    this.ctx.arc(positionX2, this.axisY, radius, 0, Math.PI*2);
+    this.ctx.fill();
+    this.ctx.closePath();
+}
+
+Timeline.prototype.drawEventReceptacleLine = function (positionX, defaultHeight=100, isEndTimeExist) {
+    // This function will draw the line from axis to (x,y)
+    const color = isEndTimeExist ? this.color.rangeEvent : this.color.event;
+    const lineWidth = 1.2 * this.resolution;
+    const height = defaultHeight * this.resolution;
+    const triangleHeight = 10 * this.resolution;
+    const triangleHalfWidth = 8 * this.resolution;
+    const boxBottomPositionY = this.axisY - height; // a little offset
+    const radius = 3 * this.resolution;
+    this.ctx.strokeStyle = color;
+    this.ctx.fillStyle = color;
+    this.ctx.lineWidth = lineWidth;
+    this.ctx.beginPath();
+    this.ctx.moveTo(positionX, this.axisY); // bottom
+    this.ctx.lineTo(positionX, boxBottomPositionY + triangleHeight); // top
+    if(isEndTimeExist) {
+        this.ctx.lineTo(positionX, boxBottomPositionY); // top
+    } else {
+        this.ctx.quadraticCurveTo(
+            positionX - triangleHalfWidth*0.2,
+            boxBottomPositionY,
+            positionX - triangleHalfWidth,
+            boxBottomPositionY
+        );
+    }
     this.ctx.lineTo(positionX + triangleHalfWidth, boxBottomPositionY);
     this.ctx.quadraticCurveTo(
         positionX + triangleHalfWidth*0.2,
         boxBottomPositionY,
         positionX,
-        boxBottomPositionY + triangleHeight)
+        boxBottomPositionY + triangleHeight
+    );
+    this.ctx.closePath();
     this.ctx.stroke();
     this.ctx.fill();
-    this.ctx.closePath();
 
     this.ctx.beginPath();
     this.ctx.arc(positionX, this.axisY, radius, 0, Math.PI*2);

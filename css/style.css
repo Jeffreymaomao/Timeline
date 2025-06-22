@@ -24,8 +24,7 @@ body.dark {
     z-index: 100;
 
     background-color: rgba(100, 100, 100, 0.2);
-/*    background-color: rgba(250, 160, 150, 0.4);*/
-        display: none;
+    display: none;
 }
 
 .main {
@@ -56,18 +55,32 @@ body.is-iframe .content {
 
 .marker {
     padding: 5px;
-    border-radius: 5px;
     min-width: 30px;
     min-height: 28px;
     max-width: 500px;
     color: floralwhite;
+}
+
+.marker.event {
     background-color: rgba(200,50,50,0.8);
+    border-radius: 5px;
+}
+
+.marker.range-event {
+    background-color: rgba(50,100,180,0.8);
+    border-radius: 5px 5px 3px 3px;
 }
 
 body.dark .marker {
     box-shadow: 0 0 2px #555;
     background-color: rgba(200,50,70,0.9);
 }
+
+body.dark .marker.range-event {
+    box-shadow: 0 0 2px #555;
+    background-color: rgba(70,100,180,0.9);
+}
+
 
 .marker a {
     color: floralwhite;
@@ -128,6 +141,10 @@ body.dark .control-panel label{
     -webkit-user-select: none; /* Safari */
         -ms-user-select: none; /* IE 10 and IE 11 */
             user-select: none; /* Standard syntax */
+}
+
+body.dark .brand-container {
+    background-color: rgba(100, 100, 100, 0.5);
 }
 
 .brand-container:hover {

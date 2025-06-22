@@ -31,7 +31,9 @@ window.addEventListener("load", () => {
     window.app = app;
     const example = windowParams.get('example');
     if(example==='1') {
-        fileTest(app);
+        fileTest1(app);
+    } if(example==='2') {
+        fileTest2(app);
     } else if (example) {
         const num = parseInt(example) || 20;
         randomTest(app, num);
@@ -49,11 +51,25 @@ const randomTest = (app, num=20)=>{
     }
 }
 
-const fileTest = (app)=>{
+const fileTest1 = (app)=>{
     let file_content = "HH:mm\n";
     for (let i = 0; i <= 23; i++) {
       let hour = i.toString().padStart(2, "0");
       file_content += `${hour}:00, ${hour}:00 event!\n`;
+    }
+    app.loadFile(file_content);
+}
+
+const fileTest2 = (app)=>{
+    let file_content = "HH:mm\n";
+    const nowHour = new Date().getHours();
+    for (let i = 0; i <= 10; i+=1) {
+        let hour = (nowHour+i).toString().padStart(2, "0");
+        if(i%2){
+            file_content += `${hour}:00, ${hour}:30, ${hour}:00~${hour}:30\n`;
+        } else {
+            file_content += `${hour}:00, ${hour}:00\n`;
+        }
     }
     app.loadFile(file_content);
 }
@@ -128,6 +144,7 @@ class App {
             }).catch(error => console.error(error));
         }
     }
+
     loadFile(file_content) {
         const csvArray = parseCSV(file_content.trim(), ',');
         let dateFormat = '';
@@ -141,17 +158,30 @@ class App {
         let minDate = null, maxDate = null;
         csvArray.forEach((eventArray)=>{
             if(eventArray.length<2) return;
-            const eventDate = parseFormattedDate(eventArray.shift().trim(), dateFormat);
-            const eventString = eventArray.join(',');
-            this.timeline.addEvent({
-                date: eventDate,
-                title: eventString
-            });
-            if (!minDate || eventDate < minDate) {
-                minDate = eventDate;
-            }
-            if (!maxDate || eventDate > maxDate) {
-                maxDate = eventDate;
+
+            const first = eventArray.shift().trim();
+            const second = eventArray.shift().trim();
+            const rest = eventArray.join(',');
+
+            const date1 = parseFormattedDate(first, dateFormat);
+            const maybeDate2 = parseFormattedDate(second, dateFormat);
+
+            if (isNaN(maybeDate2) || !maybeDate2 || !rest) {
+                this.timeline.addEvent({
+                    date: date1,
+                    title: (rest ? ([second, rest].join(',').trim()) : second)
+                });
+                if (!minDate || date1 < minDate) minDate = date1;
+                if (!maxDate || date1 > maxDate) maxDate = date1;
+            } else {
+                this.timeline.addRangeEvent({
+                    date: date1,
+                    end: maybeDate2,
+                    title: rest
+                });
+
+                if (!minDate || date1 < minDate) minDate = date1;
+                if (!maxDate || maybeDate2 > maxDate) maxDate = maybeDate2;
             }
         });
         if (minDate && maxDate) {
