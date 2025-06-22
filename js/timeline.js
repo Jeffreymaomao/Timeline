@@ -667,9 +667,9 @@ Timeline.prototype.drawEvents = function() {
         const eventDOM = this.marker.events[eventId].dom;
         let bound = eventDOM.getBoundingClientRect();
         // ---
-        let x = ( eventPositionX ) / this.resolution - bound.width*0.5 - 1;
+        let x = ( eventPositionX ) / this.resolution - bound.width*0.5;
         if(isEndTimeExist) { // if end time not exists => center
-            x = 0.5 * ( eventEndPositionX + eventPositionX ) / this.resolution - bound.width*0.5 - 1;
+            x = 0.5 * ( eventEndPositionX + eventPositionX + 4) / this.resolution - bound.width*0.5 - 1;
         }
 
         let y = ( this.axisY ) / this.resolution - defaultHeight - bound.height;
@@ -723,7 +723,7 @@ Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHei
     this.ctx.lineWidth = lineWidth;
     this.ctx.beginPath();
     this.ctx.moveTo(positionX1, boxBottomPositionY);
-    this.ctx.lineTo(positionX2, boxBottomPositionY);
+    this.ctx.lineTo(positionX2+1, boxBottomPositionY);
     this.ctx.closePath();
     this.ctx.stroke();
 
@@ -731,12 +731,12 @@ Timeline.prototype.drawEventLine  = function (positionX1, positionX2, defaultHei
     this.ctx.moveTo(positionX2, this.axisY);
     this.ctx.lineTo(positionX2, boxBottomPositionY + triangleHeight);
     this.ctx.quadraticCurveTo(
-        positionX2 - triangleHalfWidth*0.2,
+        positionX2+lineWidth - triangleHalfWidth*0.2,
         boxBottomPositionY,
-        positionX2 - triangleHalfWidth,
+        positionX2+lineWidth - triangleHalfWidth,
         boxBottomPositionY
     );
-    this.ctx.lineTo(positionX2+1, boxBottomPositionY);
+    this.ctx.lineTo(positionX2+lineWidth, boxBottomPositionY);
     this.ctx.stroke();
     this.ctx.fill();
 
