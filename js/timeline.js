@@ -27,20 +27,21 @@ class Timeline {
         this.isCheckOverlapping = config.checkOverlap?true:false;
 
         this.fps = Number(config.fps) || 10;
-
+        this.state = this.getHistoryState();
         this.range = {
             start: {
-                date: new Date(),
+                date: new Date(this.state.start) || new Date(),
                 time: null
             },
             end: {
-                date: new Date(),
+                date: new Date(this.state.end) || new Date(),
                 time: null
             },
             duration: null,
             min: 1000, // 1 second in ms
             max: 1000 * 60 * 60 * 24 * 365.5 * 100 // ~1 centry in ms
         };
+        window.addEventListener('beforeunload', this.saveHistoryState.bind(this), false);
         this.range.start.date.setHours(this.range.start.date.getHours() - 12);
         this.range.end.date.setHours(this.range.end.date.getHours() + 12);
         // ---
@@ -103,6 +104,21 @@ class Timeline {
                 window.requestAnimationFrame(this.draw.bind(this))
             }.bind(this), 1000/this.fps);
         }
+    }
+
+    saveHistoryState() {
+        window.localStorage.setItem('timeline-state', JSON.stringify(this.getCurrentState()));
+    }
+
+    getHistoryState() {
+        return JSON.parse(window.localStorage.getItem('timeline-state'));
+    }
+
+    getCurrentState() {
+        return {
+            start: this.range.start.date.getTime(),
+            end: this.range.end.date.getTime()
+        };
     }
 
     initializeDOM(parentDOM) {
@@ -396,158 +412,133 @@ class Timeline {
             case (this.range.duration <= 1000 * 1): // 小於等於 1 秒
                 this.incrementMilliseconds = 50; // 間隔 100 毫秒
                 this.formatString = ":ss.fff";
-                this.scaleRatio = 0.1;
                 plotStartDate.setMilliseconds(0);
                 break;
             case (this.range.duration <= 1000 * 5): // 小於等於 5 秒
                 this.incrementMilliseconds = 200; // 間隔 200 毫秒
                 this.formatString = ":ss.fff";
-                this.scaleRatio = 0.5;
                 plotStartDate.setMilliseconds(0);
                 break;
             case (this.range.duration <= 1000 * 10): // 小於等於 10 秒
                 this.incrementMilliseconds = 500; // 間隔 500 毫秒
                 this.formatString = ":ss.fff";
-                this.scaleRatio = 1;
                 plotStartDate.setMilliseconds(0);
                 break;
             case (this.range.duration <= 1000 * 30): // 小於等於 30 秒
                 this.incrementMilliseconds = 1000; // 間隔 1 秒
                 this.formatString = "mm:ss";
-                this.scaleRatio = 5;
                 plotStartDate.setMilliseconds(0);
                 break;
             // ---
             case (this.range.duration <= 1000 * 60 * 2): // 小於等於 2 分鐘
                 this.incrementMilliseconds = 1000 * 5; // 間隔 5 秒
                 this.formatString = "mm:ss";
-                this.scaleRatio = 10;
                 plotStartDate.setSeconds(0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 5): // 小於等於 5 分鐘
                 this.incrementMilliseconds = 1000 * 10; // 間隔 10 秒
                 this.formatString = "mm:ss";
-                this.scaleRatio = 30;
                 plotStartDate.setSeconds(0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 10): // 小於等於 10 分鐘
                 this.incrementMilliseconds = 1000 * 20; // 間隔 15 秒
                 this.formatString = "mm:ss";
-                this.scaleRatio = 60;
                 plotStartDate.setSeconds(0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 15): // 小於等於 15 分鐘
                 this.incrementMilliseconds = 1000 * 30; // 間隔 30 秒
                 this.formatString = "mm:ss";
-                this.scaleRatio = 100;
                 plotStartDate.setSeconds(0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 20): // 小於等於 20 分鐘
                 this.incrementMilliseconds = 1000 * 60; // 間隔 1 分鐘
                 this.formatString = "mm:ss";
-                this.scaleRatio = 120;
                 plotStartDate.setSeconds(0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 30): // 小於等於 30 分鐘
                 this.incrementMilliseconds = 1000 * 60; // 間隔 2 分鐘
                 this.formatString = "mm:ss";
-                this.scaleRatio = 200;
                 plotStartDate.setSeconds(0, 0);
                 break;
             // ---
             case (this.range.duration <= 1000 * 60 * 60 * 1): // 小於等於 1 小時
                 this.incrementMilliseconds = 1000 * 60 * 5; // 間隔 5 分鐘
                 this.formatString = "HH:mm";
-                this.scaleRatio = 400;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 2): // 小於等於 2 小時
                 this.incrementMilliseconds = 1000 * 60 * 10; // 間隔 10 分鐘
                 this.formatString = "HH:mm";
-                this.scaleRatio = 600;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 4): // 小於等於 4 小時
                 this.incrementMilliseconds = 1000 * 60 * 15; // 間隔 15 分鐘
                 this.formatString = "HH:mm";
-                this.scaleRatio = 1000;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 6): // 小於等於 6 小時
                 this.incrementMilliseconds = 1000 * 60 * 20; // 間隔 20 分鐘
                 this.formatString = "HH:mm";
-                this.scaleRatio = 2000;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 12): // 小於等於 12 小時
                 this.incrementMilliseconds = 1000 * 60 * 30; // 間隔 30 分鐘
                 this.formatString = "HH:mm";
-                this.scaleRatio = 4000;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             // ---
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 1): // 小於等於 1 天
                 this.incrementMilliseconds = 1000 * 60 * 60; // 間隔小時
                 this.formatString = "HH:mm";
-                this.scaleRatio = 6000;
                 plotStartDate.setMinutes(0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 2): // 小於等於 2 天
                 this.incrementMilliseconds = 1000 * 60 * 60 * 6; // 間隔 6 小時
                 this.formatString = "MM/dd HH:mm";
-                this.scaleRatio = 20000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 4): // 小於等於 4 天
                 this.incrementMilliseconds = 1000 * 60 * 60 * 12; // 間隔 12 小時
                 this.formatString = "MM/dd HH:mm";
-                this.scaleRatio = 40000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 7): // 小於等於 1 週
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
                 this.formatString = "(ddd) MM/dd";
-                this.scaleRatio = 60000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 14): // 小於等於 2 週
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
                 this.formatString = "(ddd) MM/dd";
-                this.scaleRatio = 100000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 28): // 小於等於 1 月
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24; // 間隔 1 天
                 this.formatString = "MM/dd";
-                this.scaleRatio = 200000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 break;
             // ---
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 28 * 2): // 小於等於 2 月
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 4; // 間隔 4 天
                 this.formatString = "MM/dd";
-                this.scaleRatio = 400000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 0.25): // 小於等於 4 月
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 7; // 間隔 1 週
                 this.formatString = "MM/dd";
-                this.scaleRatio = 600000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 0.5): // 小於等於 6 月
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 14; // 間隔 14 天
                 this.formatString = "yyyy/MM/dd";
-                this.scaleRatio = 1000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425): // 小於等於 1 年
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 28; // 間隔 ~1 月
                 this.formatString = "yyyy/MM/dd";
-                this.scaleRatio = 2000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
@@ -555,26 +546,30 @@ class Timeline {
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 2): // 小於等於 2 年
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 0.25; // 間隔 0.25年
                 this.formatString = "yyyy/MM";
-                this.scaleRatio = 6000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
 
             case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 5): // 小於等於 5 年
                 this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 0.5; // 間隔 0.5年
-                this.formatString = "yyyy";
-                this.scaleRatio = 50000000;
+                this.formatString = "yyyy/MM";
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setMonth(0, 1);
                 break;
-            default: // 大於 
-                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.5 * 5; // 間隔 1 年
+            case (this.range.duration <= 1000 * 60 * 60 * 24 * 365.2425 * 20): // 小於等於 10 年
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425; // 間隔 1年
+                this.formatString = "yyyy/MM";
+                plotStartDate.setHours(0, 0, 0, 0);
+                plotStartDate.setMonth(0, 1);
+                break;
+            default: // 大於
+                this.incrementMilliseconds = 1000 * 60 * 60 * 24 * 365.2425 * 5; // 間隔 5 年
                 this.formatString = "yyyy";
-                this.scaleRatio = 1000000000;
                 plotStartDate.setHours(0, 0, 0, 0);
                 plotStartDate.setFullYear(1969, 0, 1);
                 break;
         }
+        this.scaleRatio = this.range.duration*0.0005;
         this.plotStartTime = plotStartDate.getTime();
     }
 }
