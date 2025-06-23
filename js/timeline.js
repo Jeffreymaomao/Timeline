@@ -394,21 +394,19 @@ class Timeline {
             let newStartDate = new Date(startTime - deltaY * mouseLeftRatio);
             let newEndDate = new Date(endTime + deltaY * mouseRightRatio);
 
-            if(e.deltaY<0 && startTime + minDuration > endTime){
-                return;
-            } else if(e.deltaY>0 && endTime - startTime > maxDuration){
-                return;
-            }
-
             if(e.deltaX) {
                 const deltaX = e.deltaX * this.scaleRatio * this._scaleRatioX;
                 newStartDate = new Date(startTime + deltaX);
                 newEndDate = new Date(endTime + deltaX);
             }
 
+            const newDuration = newEndDate.getTime() - newStartDate.getTime();
+            if (newDuration < minDuration || newDuration > maxDuration || newStartDate >= newEndDate) {
+                return;
+            }
+
             this.range.start.date = newStartDate;
             this.range.end.date = newEndDate;
-            // this.draw();
             window.requestAnimationFrame(this.draw.bind(this));
         }.bind(this), { passive: false });
     }
@@ -587,6 +585,7 @@ class Timeline {
         }
         this.scaleRatio = this.range.duration*0.0005;
         this.plotStartTime = plotStartDate.getTime();
+        // console.log(`ratio : ${this.scaleRatio}`)
     }
 }
 
