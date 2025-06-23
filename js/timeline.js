@@ -656,7 +656,14 @@ Timeline.prototype.drawEvents = function() {
         const eventEndTime = event.end?.getTime();
         const isEndTimeExist = Boolean(eventEndTime);
         // ---
-        if(eventTime < this.range.start.time || this.range.end.time < eventTime){
+        if(isEndTimeExist ? (
+            this.range.start.time > eventEndTime
+            || this.range.end.time < eventTime
+            ) : (
+                this.range.start.time > eventTime
+             || this.range.end.time < eventTime
+           )
+        ) {
             this.marker.events[eventId].dom.style.display = "none";
             return;
         }

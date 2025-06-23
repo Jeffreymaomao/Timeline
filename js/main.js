@@ -156,6 +156,7 @@ class App {
             document.title = `Timeline - ${file.name}`
             readFileContent(file).then(content => {
                 loadFile(content);
+                this.value = ''; // clear input to allow re-uploading the same file
             }).catch(error => console.error(error));
         }
     }
