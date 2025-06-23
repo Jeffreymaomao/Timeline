@@ -1,4 +1,11 @@
-import { createAndAppendDOM, hash, parseFormattedDate, parseCSV} from "./tools.js";
+import {
+    createAndAppendDOM,
+    hash,
+    parseFormattedDate,
+    parseCSV,
+    readFileContent,
+    readFileFromURL
+} from "./tools.js";
 import { Timeline } from "./timeline.js";
 
 const currentTimeKeyword = [
@@ -32,6 +39,13 @@ window.addEventListener("load", () => {
         fps: fps
     });
     // ---
+    let url = windowParams.get('url');
+    if(url) {
+        readFileFromURL(url).then(content => {
+            app.loadFile(content);
+        }).catch(error => console.error(error));
+    }
+
     let eventLogFile = windowParams.get('events');
     const lineSeperator = windowParams.get('sep') || '|';
     if(eventLogFile) {
@@ -149,18 +163,6 @@ class App {
             }
         });
 
-        function readFileContent(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    resolve(event.target.result); // Get file content as text
-                };
-                reader.onerror = function(event) {
-                    reject(new Error('Error reading file'));
-                };
-                reader.readAsText(file);
-            });
-        }
         const loadFile = this.loadFile.bind(this);
         function handleDrop(e) {
             let dt = e.dataTransfer || e.target;
@@ -213,31 +215,41 @@ class App {
                 maybeDate2 = 'now';
             }
 
+            if(!date1) return;
+
             if (!maybeDate2 || !rest) {
                 this.timeline.addEvent({
                     date: date1,
                     title: (rest ? ([second, rest].join(',').trim()) : second),
                     color: color
                 });
-                if (!minDate || date1 < minDate) minDate = date1;
-                if (!maxDate || date1 > maxDate) maxDate = date1;
+                if(!minDate) minDate = date1;
+                if(!maxDate) maxDate = date1;
+                if (minDate && date1 < minDate) minDate = date1;
+                if (maxDate && date1 > maxDate) maxDate = date1;
             } else {
+                const endDate = (maybeDate2 === 'now') ? new Date() : maybeDate2;
+
                 this.timeline.addRangeEvent({
                     date: date1,
-                    end: maybeDate2,
+                    end: endDate,
                     title: rest,
                     color: color
                 });
-
-                maybeDate2 = new Date();
-                if (!minDate || date1 < minDate) minDate = date1;
-                if (!maxDate || maybeDate2 > maxDate) maxDate = maybeDate2;
+                if(!minDate) minDate = date1;
+                if(!maxDate) maxDate = endDate;
+                if (minDate && date1 < minDate) minDate = date1;
+                if (maxDate && endDate > maxDate) maxDate = endDate;
             }
         });
+
+        if (!minDate) minDate = maxDate;
+        if (!maxDate) maxDate = minDate;
+
         if (minDate && maxDate) {
             const startDate = new Date(minDate);
-            const endDate = new Date(maxDate)
-            let deltaDate = Math.abs(endDate-startDate) || 1000;
+            const endDate = new Date(maxDate);
+            let deltaDate = Math.abs(endDate-startDate) || 1000 * 60 * 60 * 24; // at least 1 day
             this.timeline.range.start.date = new Date(minDate.getTime()-deltaDate*0.2);
             this.timeline.range.end.date = new Date(maxDate.getTime()+deltaDate*0.2);
         }

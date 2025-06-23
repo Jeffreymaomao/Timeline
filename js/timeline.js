@@ -20,8 +20,8 @@ class Timeline {
         this.incrementMilliseconds = null;
         this.deltaPixel = null
         this.scaleRatio = 1;
-        this._scaleRatioX = 0.5;
-        this._scaleRatioY = 1;
+        this._scaleRatioX = 1.0;
+        this._scaleRatioY = 1.0;
         this.plotStartTime = null;
         this.formatString = null;
         this.isCheckOverlapping = config.checkOverlap?true:false;
@@ -681,6 +681,12 @@ Timeline.prototype.drawEvents = function() {
         let x = ( eventPositionX ) / this.resolution - bound.width*0.5;
         if(isEndTimeExist) { // if end time not exists => center
             x = 0.5 * ( eventEndPositionX + eventPositionX + 4) / this.resolution - bound.width*0.5 - 1;
+
+            if (this.range.start.time > eventTime) {
+                x = eventEndPositionX / this.resolution - bound.width;
+            } else if (this.range.end.time < eventEndTime) {
+                x = eventPositionX / this.resolution;
+            }
         }
 
         let y = ( this.axisY ) / this.resolution - defaultHeight - bound.height;

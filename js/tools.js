@@ -58,6 +58,27 @@ function createAndAppendElement(parent, tag, attributes = {}) {
     return element;
 }
 
+function readFileContent(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            resolve(event.target.result); // Get file content as text
+        };
+        reader.onerror = function(event) {
+            reject(new Error('Error reading file'));
+        };
+        reader.readAsText(file);
+    });
+}
+
+function readFileFromURL(url) {
+    return fetch(url)
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.text();
+        });
+}
+
 // ----
 
 function formatDate(date, format, utc) {
@@ -651,5 +672,7 @@ export {
     getTime,
     addStyle,
     parseCSV,
+    readFileContent,
+    readFileFromURL,
     hash
 }
