@@ -20,8 +20,8 @@ class Timeline {
         this.incrementMilliseconds = null;
         this.deltaPixel = null
         this.scaleRatio = 1;
-        this._scaleRatioX = 0.9;
-        this._scaleRatioY = 2;
+        this._scaleRatioX = 0.5;
+        this._scaleRatioY = 1;
         this.plotStartTime = null;
         this.formatString = null;
         this.isCheckOverlapping = config.checkOverlap?true:false;
@@ -588,7 +588,7 @@ class Timeline {
                 plotStartDate.setFullYear(1969, 0, 1);
                 break;
         }
-        this.scaleRatio = this.range.duration*0.0005;
+        this.scaleRatio = this.range.duration*0.0001;
         this.plotStartTime = plotStartDate.getTime();
         // console.log(`ratio : ${this.scaleRatio}`)
     }
@@ -611,7 +611,7 @@ Timeline.prototype.addEvent = function(event) {
     const eventTitle = event.title || '';
     const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.event", {
         id: eventId,
-        style: 'position: absolute'
+        style: 'position: absolute;'+ (event.color ? `background-color:${event.color}` : '')
     });
     markerDOM.innerHTML = eventTitle;
 
@@ -629,7 +629,7 @@ Timeline.prototype.addRangeEvent = function(event) {
 
     const eventDate = event.date;
     const eventEnd = event.end;
-    const eventId = event.id || hash(eventDate, 'uuid');
+    const eventId = event.id || hash(JSON.stringify(event), 'uuid');
     const eventTitle = event.title || '';
     const markerDOM = createAndAppendDOM(this.dom.markersContainer, "div.marker.range-event", {
         id: eventId,
@@ -653,7 +653,7 @@ Timeline.prototype.drawEvents = function() {
     Object.keys(this.events).forEach((eventId)=>{
         const event = this.events[eventId];
         const eventTime = event.date.getTime();
-        const eventEndTime = event.end?.getTime();
+        const eventEndTime = event.end==='now' ? (new Date().getTime()) : event.end?.getTime();
         const isEndTimeExist = Boolean(eventEndTime);
         // ---
         if(isEndTimeExist ? (

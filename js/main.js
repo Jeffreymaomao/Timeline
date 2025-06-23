@@ -1,6 +1,18 @@
 import { createAndAppendDOM, hash, parseFormattedDate, parseCSV} from "./tools.js";
 import { Timeline } from "./timeline.js";
 
+const currentTimeKeyword = [
+    'now',
+    'current',
+    'present',
+    'this',
+    'today',
+    'current time',
+    'current date',
+    'now time',
+    'now date',
+];
+
 window.addEventListener("load", () => {
     if (window.self !== window.top) {
         document.body.classList.add("is-iframe");
@@ -196,9 +208,12 @@ class App {
             const rest = eventArray.join(',');
 
             const date1 = parseFormattedDate(first, dateFormat);
-            const maybeDate2 = parseFormattedDate(second, dateFormat);
+            let maybeDate2 = parseFormattedDate(second, dateFormat);
+            if (currentTimeKeyword.includes(second.toLowerCase())) {
+                maybeDate2 = 'now';
+            }
 
-            if (isNaN(maybeDate2) || !maybeDate2 || !rest) {
+            if (!maybeDate2 || !rest) {
                 this.timeline.addEvent({
                     date: date1,
                     title: (rest ? ([second, rest].join(',').trim()) : second),
@@ -214,6 +229,7 @@ class App {
                     color: color
                 });
 
+                maybeDate2 = new Date();
                 if (!minDate || date1 < minDate) minDate = date1;
                 if (!maxDate || maybeDate2 > maxDate) maxDate = maybeDate2;
             }
