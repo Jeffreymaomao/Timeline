@@ -170,6 +170,11 @@ class Timeline {
         this.dom.checkOverlap.onchange = (e)=>{
             this.isCheckOverlapping = this.dom.checkOverlap.checked;
             window.requestAnimationFrame(this.draw.bind(this));
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('check_overlap', 'true');
+            history.replaceState(null, '', window.location.pathname+'?'+params.toString());
+
         };
     }
 
